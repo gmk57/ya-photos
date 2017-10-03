@@ -1,5 +1,6 @@
 package gmk57.yaphotos;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -26,6 +27,8 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import org.parceler.Parcels;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,47 +39,25 @@ import java.util.List;
  */
 public class PhotoFragment extends BaseFragment implements Callback {
     private static final String TAG = "PhotoFragment";
-    private static final String EXTRA_IMAGE_URL = "gmk57.yaphotos.photoImageUrl";
-    private static final String EXTRA_TITLE = "gmk57.yaphotos.photoTitle";
-    private static final String KEY_UI_VISIBLE = "uiVisible";
+    private static final String ARG_PHOTO = "photo";
 
-    private boolean mUiVisible = true;
+    private Callbacks mCallbacks;
     private ImageView mImageView;
-    private String mPhotoImageUrl;
-    private String mPhotoTitle;
+    private Photo mPhoto;
 
+    public static PhotoFragment newInstance(Photo photo) {
+        Bundle args = new Bundle();
+        args.putParcelable(ARG_PHOTO, Parcels.wrap(photo));
 
-    public static PhotoFragment newInstance(Bundle args) {
         PhotoFragment fragment = new PhotoFragment();
         fragment.setArguments(args);
         return fragment;
     }
 
-    /**
-     * Creates arguments for hosting activity to use (for example, in its
-     * <code>newIntent</code> method)
-     *
-     * @param photoImageUrl Url to load image from
-     * @param photoTitle    Title to display in ActionBar
-     * @return Bundle of arguments
-     */
-    public static Bundle createArguments(String photoImageUrl, String photoTitle) {
-        Bundle args = new Bundle();
-        args.putString(EXTRA_IMAGE_URL, photoImageUrl);
-        args.putString(EXTRA_TITLE, photoTitle);
-        return args;
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            mUiVisible = savedInstanceState.getBoolean(KEY_UI_VISIBLE, true);
-        }
-        mPhotoImageUrl = getArguments().getString(EXTRA_IMAGE_URL);
-        mPhotoTitle = getArguments().getString(EXTRA_TITLE);
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.getSupportActionBar().setSubtitle(mPhotoTitle);
+        mPhoto = Parcels.unwrap(getArguments().getParcelable(ARG_PHOTO));
         setHasOptionsMenu(true);
     }
 
@@ -88,32 +69,27 @@ public class PhotoFragment extends BaseFragment implements Callback {
         mImageView = view.findViewById(R.id.fullscreen_image_view);
         mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                mUiVisible = !mUiVisible;
-                setupUiVisibility();
+            public void onClick(View view) {
+                mCallbacks.onClick();
             }
         });
 
         setupProgressState(STATE_LOADING);
-        Picasso.with(getActivity()).load(mPhotoImageUrl).into(mImageView, this);
+        Picasso.with(getActivity())
+                .load(mPhoto.getImageUrl())
+                .into(mImageView, this);
 
         return view;
-    }
-
-    @Override
-    public void onSuccess() {
-        setupProgressState(STATE_OK);
-    }
-
-    @Override
-    public void onError() {
-        setupProgressState(STATE_ERROR);
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.fragment_photo, menu);
+
+        // This fragment is currently selected, so we can set ActionBar subtitle
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.getSupportActionBar().setSubtitle(mPhoto.getTitle());
     }
 
     @Override
@@ -128,40 +104,32 @@ public class PhotoFragment extends BaseFragment implements Callback {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        setupUiVisibility(); // Reset flags to persist if the user navigates out and back in
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(KEY_UI_VISIBLE, mUiVisible);
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
+    public void onSuccess() {
+        setupProgressState(STATE_OK);
+    }
+
+    @Override
+    public void onError() {
+        setupProgressState(STATE_ERROR);
     }
 
     @Override
     protected void tryAgain() {
         Picasso.with(getActivity())
-                .load(mPhotoImageUrl)
+                .load(mPhoto.getImageUrl())
                 .into(mImageView, this);
-    }
-
-    /**
-     * Hides or shows system UI and ActionBar according to current
-     * <code>mUiVisible</code> value. Status bar is completely hidden
-     * (on API >= 16) and navigation bar is dimmed.
-     */
-    private void setupUiVisibility() {
-        int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (!mUiVisible) {
-            activity.getSupportActionBar().hide();
-            uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
-            uiOptions |= View.SYSTEM_UI_FLAG_LOW_PROFILE;
-        } else {
-            activity.getSupportActionBar().show();
-        }
-        mImageView.setSystemUiVisibility(uiOptions);
     }
 
     /**
@@ -171,7 +139,7 @@ public class PhotoFragment extends BaseFragment implements Callback {
      * // TODO: Delete old files
      */
     private void shareImage() {
-        Picasso.with(getActivity()).load(mPhotoImageUrl).into(new Target() {
+        Picasso.with(getActivity()).load(mPhoto.getImageUrl()).into(new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 try {
@@ -186,8 +154,8 @@ public class PhotoFragment extends BaseFragment implements Callback {
                             "gmk57.yaphotos.fileprovider", imageFile);
                     Intent shareIntent = ShareCompat.IntentBuilder.from(getActivity())
                             .setStream(imageUri)
-                            .setSubject(mPhotoTitle)
-                            .setText(mPhotoTitle)
+                            .setSubject(mPhoto.getTitle())
+                            .setText(mPhoto.getTitle())
                             .setType("image/jpeg")
                             .getIntent();
 
@@ -222,5 +190,12 @@ public class PhotoFragment extends BaseFragment implements Callback {
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) {/* not needed */}
         });
+    }
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks {
+        void onClick();
     }
 }

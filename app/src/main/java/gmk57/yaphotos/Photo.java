@@ -1,9 +1,13 @@
 package gmk57.yaphotos;
 
+import org.parceler.Parcel;
+
+@SuppressWarnings("WeakerAccess")
+@Parcel
 public class Photo {
-    private String mTitle;
-    private String mThumbnailUrl;
-    private String mImageUrl;
+    String mTitle;
+    String mThumbnailUrl;
+    String mImageUrl;
 
     @Override
     public String toString() {

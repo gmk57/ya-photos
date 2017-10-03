@@ -2,6 +2,7 @@
   <dictionary name="User">
     <words>
       <w>fileprovider</w>
+      <w>parceler</w>
       <w>podhistory</w>
       <w>preloading</w>
       <w>preloads</w>

@@ -1,12 +1,16 @@
 package gmk57.yaphotos;
 
+import org.parceler.Parcel;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
+@Parcel
 public class Album {
-    private List<Photo> mPhotos;
-    private String mNextPage;
-    private int mOldSize;
+    List<Photo> mPhotos;
+    String mNextPage;
+    int mOldSize;
 
     /**
      * Creates new Album
@@ -20,6 +24,9 @@ public class Album {
             mPhotos = new ArrayList<>(oldAlbum.mPhotos);
             mOldSize = oldAlbum.getSize();
         }
+    }
+
+    public Album() {
     }
 
     public String getNextPage() {

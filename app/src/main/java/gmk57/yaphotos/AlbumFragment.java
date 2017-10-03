@@ -175,7 +175,7 @@ public class AlbumFragment extends BaseFragment {
 
     private class PhotoHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ImageView mThumbnailImageView;
-        private Photo mPhoto;
+        private int mPosition;
 
         public PhotoHolder(View itemView) {
             super(itemView);
@@ -183,8 +183,8 @@ public class AlbumFragment extends BaseFragment {
             itemView.setOnClickListener(this);
         }
 
-        public void bindPhoto(Photo photo) {
-            mPhoto = photo;
+        public void bindPhoto(Photo photo, int position) {
+            mPosition = position;
 
             Picasso.with(getActivity())
                     .load(photo.getThumbnailUrl())
@@ -194,8 +194,7 @@ public class AlbumFragment extends BaseFragment {
 
         @Override
         public void onClick(View v) {
-            startActivity(PhotoActivity.newIntent(getActivity(), mPhoto.getImageUrl(),
-                    mPhoto.getTitle()));
+            startActivity(PhotoActivity.newIntent(getActivity(), mCurrentAlbum, mPosition));
         }
     }
 
@@ -217,7 +216,7 @@ public class AlbumFragment extends BaseFragment {
         @Override
         public void onBindViewHolder(PhotoHolder holder, int position) {
             Photo photo = mAlbum.getPhoto(position);
-            holder.bindPhoto(photo);
+            holder.bindPhoto(photo, position);
 
             for (int offset : new int[]{8, -8, 16, -16, 24, -24}) {
                 if (position + offset >= 0 && position + offset < mAlbum.getSize()) {
