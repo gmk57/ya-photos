@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">YaPhotos</string>
-    <string name="recent">Recent photos</string>
-    <string name="popular">Popular photos</string>
-    <string name="day">Photos of the day</string>
+    <string-array name="album_names">
+        <item>Recent</item>
+        <item>Popular</item>
+        <item>Of the day</item>
+    </string-array>
     <string name="share_action">Share</string>
     <string name="share_chooser_title">Share photo via</string>
     <string name="try_again">Try again</string>

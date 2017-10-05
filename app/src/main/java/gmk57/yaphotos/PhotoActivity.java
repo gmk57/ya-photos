@@ -52,7 +52,7 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
             mUiVisible = savedInstanceState.getBoolean(KEY_UI_VISIBLE, true);
         }
 
-        setContentView(R.layout.activity_pager);
+        setContentView(R.layout.viewpager);
         mViewPager = findViewById(R.id.pager);
         mViewPager.setAdapter(new PhotoPagerAdapter(getSupportFragmentManager()));
         mViewPager.setCurrentItem(position);

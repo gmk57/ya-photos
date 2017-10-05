@@ -8,9 +8,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -24,24 +21,30 @@ import com.squareup.picasso.Picasso;
  */
 public class AlbumFragment extends BaseFragment {
     private static final String TAG = "AlbumFragment";
+    private static final String ARG_ALBUM_TYPE = "albumType";
 
     private boolean mFetchRunning;
+    private int mAlbumType;
     private Album mCurrentAlbum = new Album(null);
     private FetchAlbumTask mFetchAlbumTask;
     private GridLayoutManager mLayoutManager;
     private PhotoAdapter mPhotoAdapter;
-    private PreferenceConnector mPreferenceConnector;
     private RecyclerView mRecyclerView;
+
+    public static AlbumFragment newInstance(int albumType) {
+        Bundle args = new Bundle();
+        args.putInt(ARG_ALBUM_TYPE, albumType);
+
+        AlbumFragment fragment = new AlbumFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAlbumType = getArguments().getInt(ARG_ALBUM_TYPE);
         setRetainInstance(true);
-        setHasOptionsMenu(true);
-
-        if (mPreferenceConnector == null) {
-            mPreferenceConnector = new PreferenceConnector(getActivity());
-        }
 
         setupProgressState(STATE_LOADING);
         startFetchingAlbum();
@@ -82,29 +85,6 @@ public class AlbumFragment extends BaseFragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.fragment_album, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.recent:
-                setupAlbumType(YaDownloader.RECENT);
-                return true;
-            case R.id.popular:
-                setupAlbumType(YaDownloader.POPULAR);
-                return true;
-            case R.id.day:
-                setupAlbumType(YaDownloader.DAY);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
     protected void tryAgain() {
         startFetchingAlbum();
     }
@@ -129,22 +109,6 @@ public class AlbumFragment extends BaseFragment {
                 viewTreeObserver.removeGlobalOnLayoutListener(listener);
             }
         }
-    }
-
-    /**
-     * Saves album type to shared preferences, cancels downloading thumbnails,
-     * clears current album and starts fetching a new one.
-     *
-     * @param albumType One of YaDownloader's constants: <code>RECENT</code>,
-     *                  <code>POPULAR</code> or <code>DAY</code>.
-     *                  Used to construct URL to fetch album from.
-     */
-    private void setupAlbumType(String albumType) {
-        mPreferenceConnector.setAlbumType(albumType);
-        mCurrentAlbum = new Album(null);
-        mPhotoAdapter.setAlbum(mCurrentAlbum);
-        setupProgressState(STATE_LOADING);
-        startFetchingAlbum();
     }
 
     private void fetchNextPageIfNeeded() {
@@ -235,9 +199,9 @@ public class AlbumFragment extends BaseFragment {
 
         public void setAlbum(Album album) {
             mAlbum = album;
-            if (album.getSize() == 0) {  // Clearing album
+            if (album.getSize() == 0) {         // Clearing album
                 notifyDataSetChanged();
-            } else {  // Appending new photos
+            } else {                            // Appending new photos
                 int newItems = album.getSize() - album.getOldSize();
                 notifyItemRangeInserted(album.getOldSize(), newItems);
             }
@@ -249,7 +213,7 @@ public class AlbumFragment extends BaseFragment {
 
         @Override
         protected Album doInBackground(Album... oldAlbumVararg) {
-            return new YaDownloader().fetchAlbum(mPreferenceConnector, oldAlbumVararg);
+            return new YaDownloader().fetchAlbum(mAlbumType, oldAlbumVararg);
         }
 
         @Override

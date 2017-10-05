@@ -2,7 +2,6 @@ package gmk57.yaphotos;
 
 import android.content.res.Resources;
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -28,9 +27,8 @@ import java.util.TimeZone;
  * Does not have any internal state.
  */
 public class YaDownloader {
-    public static final String RECENT = "recent";
-    public static final String POPULAR = "top";
-    public static final String DAY = "podhistory";
+    public static final String[] ALBUM_PATHS = {"recent", "top", "podhistory"};
+
     private static final String TAG = "YaDownloader";
 
     public String downloadString(String urlString) throws IOException {
@@ -66,16 +64,14 @@ public class YaDownloader {
     /**
      * Builds URL to fetch album
      *
-     * @param albumType   One of YaDownloader's constants: <code>RECENT</code>,
-     *                    <code>POPULAR</code> or <code>DAY</code>.
-     * @param lastSegment One more segment to fetch next page. May be empty,
-     *                    but not null.
+     * @param albumPath   One of the values in YaDownloader's <code>ALBUM_PATHS</code>.
+     * @param lastSegment One more segment to fetch next page. May be empty, but not null.
      * @return URL to fire
      */
-    private String buildUrl(@NonNull String albumType, @NonNull String lastSegment) {
+    private String buildUrl(String albumPath, String lastSegment) {
         return Uri.parse("http://api-fotki.yandex.ru/api/")
                 .buildUpon()
-                .appendEncodedPath(albumType + "/")
+                .appendEncodedPath(albumPath + "/")
                 .appendEncodedPath(lastSegment)
                 .appendQueryParameter("format", "json")
                 .build().toString();
@@ -86,23 +82,21 @@ public class YaDownloader {
      * <p>
      * If old album is provided, new album will be built on top of it, appending
      * photos of its <code>getNextPage()</code>.
-     * Otherwise, new album will be built from scratch, according to album type
-     * in shared preferences.
+     * Otherwise, new album will be built from scratch, according to provided album type.
      *
-     * @param preferenceConnector Connector to shared preferences (to avoid passing
-     *                            Context)
-     * @param oldAlbumVararg      Old album (to append) or empty (to create from scratch)
+     * @param albumType      Valid values = YaDownloader.ALBUM_PATHS indexes
+     * @param oldAlbumVararg Old album (to append) or empty (to create from scratch)
      * @return New album
      */
-    public Album fetchAlbum(PreferenceConnector preferenceConnector, Album... oldAlbumVararg) {
+    public Album fetchAlbum(int albumType, Album... oldAlbumVararg) {
         Album oldAlbum = null;
         String urlString;
-        if (oldAlbumVararg.length > 0) {    // Create on top of oldAlbum
+        if (oldAlbumVararg.length > 0) {            // Create on top of oldAlbum
             oldAlbum = oldAlbumVararg[0];
             urlString = oldAlbum.getNextPage();
-        } else {                            // Create from scratch
-            String albumType = preferenceConnector.getAlbumType();
-            urlString = buildUrl(albumType, "");
+        } else {                                    // Create from scratch
+            String albumPath = ALBUM_PATHS[albumType];
+            urlString = buildUrl(albumPath, "");
         }
         Album newAlbum = new Album(oldAlbum);
 
@@ -110,7 +104,6 @@ public class YaDownloader {
             String jsonString = downloadString(urlString);
             JSONObject jsonBody = new JSONObject(jsonString);
             parseJson(jsonBody, newAlbum);
-
         } catch (IOException | NullPointerException e) {
             Log.e(TAG, "Failed to fetch album: " + e);
         } catch (JSONException | ParseException e) {
@@ -193,6 +186,6 @@ public class YaDownloader {
         Date prevDate = calendar.getTime();
 
         String offset = "poddate;" + dateFormat.format(prevDate) + "/";
-        return buildUrl(DAY, offset);
+        return buildUrl("podhistory", offset);
     }
 }

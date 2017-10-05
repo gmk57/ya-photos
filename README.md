@@ -10,31 +10,33 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 
 ## Features
 
-* Album view:
-  * Thumbnails caching and preloading (with lower priority)
-  * Endless scrolling
-* Detail view:
-  * Swipe navigation
-  * Fullscreen mode
-  * Share button
-* Progress and error indicators
-* Image quality, thumbnail size and column number auto-adjusted to screen size
-* Workaround to calculate next page for "Photos of the day" album
+- Album view:
+  - Swipe and tab navigation
+  - App bar scrolling off-screen
+  - Thumbnails caching and preloading (with lower priority)
+  - Endless scrolling
+- Detail view:
+  - Swipe navigation
+  - Fullscreen mode
+  - Share button
+- Progress and error indicators
+- Image quality, thumbnail size and column number auto-adjusted to screen size
+- Workaround to calculate next page for "Photos of the day" album
 
 ## Technologies used
 
-* [Parceler](https://github.com/johncarl81/parceler)
-* [Picasso](https://github.com/square/picasso)
-* AsyncTask
-* Date, Calendar, SimpleDateFormat
-* FileProvider
-* Fragment, FragmentManager
-* HttpURLConnection
-* JSONObject, JSONArray
-* RecyclerView, GridLayoutManager
-* SharedPreferences
-* StrictMode
-* ViewPager, FragmentStatePagerAdapter
+- [Parceler](https://github.com/johncarl81/parceler)
+- [Picasso](https://github.com/square/picasso)
+- AsyncTask
+- CoordinatorLayout, AppBarLayout, Toolbar, TabLayout
+- Date, Calendar, SimpleDateFormat
+- FileProvider
+- Fragment, FragmentManager
+- HttpURLConnection
+- JSONObject, JSONArray
+- RecyclerView, GridLayoutManager
+- StrictMode
+- ViewPager, FragmentStatePagerAdapter, FragmentPagerAdapter
 
 ## Installation
 
