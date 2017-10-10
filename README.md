@@ -15,19 +15,22 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
   - App bar scrolling off-screen
   - Thumbnails caching and preloading (with lower priority)
   - Endless scrolling
+  - Thumbnail size and column number auto-adjusted to screen size
+  - Progress and error indicators
 - Detail view:
   - Swipe navigation
   - Fullscreen mode
   - Share button
-- Progress and error indicators
-- Image quality, thumbnail size and column number auto-adjusted to screen size
+  - Image size auto-adjusted to screen size
+  - Progress and error indicators
 - Workaround to calculate next page for "Photos of the day" album
 
 ## Technologies used
 
+- [EventBus](https://github.com/greenrobot/EventBus)
 - [Parceler](https://github.com/johncarl81/parceler)
 - [Picasso](https://github.com/square/picasso)
-- AsyncTask
+- AtomicBoolean, AtomicReferenceArray
 - CoordinatorLayout, AppBarLayout, Toolbar, TabLayout
 - Date, Calendar, SimpleDateFormat
 - FileProvider
@@ -36,6 +39,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - JSONObject, JSONArray
 - RecyclerView, GridLayoutManager
 - StrictMode
+- Thread
 - ViewPager, FragmentStatePagerAdapter, FragmentPagerAdapter
 
 ## Installation

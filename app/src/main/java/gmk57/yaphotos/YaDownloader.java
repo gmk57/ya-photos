@@ -2,6 +2,10 @@ package gmk57.yaphotos;
 
 import android.content.res.Resources;
 import android.net.Uri;
+import android.support.annotation.IntRange;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -12,6 +16,8 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
@@ -28,10 +34,9 @@ import java.util.TimeZone;
  */
 public class YaDownloader {
     public static final String[] ALBUM_PATHS = {"recent", "top", "podhistory"};
-
     private static final String TAG = "YaDownloader";
 
-    public String downloadString(String urlString) throws IOException {
+    private String downloadString(String urlString) throws IOException {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -84,15 +89,15 @@ public class YaDownloader {
      * photos of its <code>getNextPage()</code>.
      * Otherwise, new album will be built from scratch, according to provided album type.
      *
-     * @param albumType      Valid values = YaDownloader.ALBUM_PATHS indexes
-     * @param oldAlbumVararg Old album (to append) or empty (to create from scratch)
+     * @param albumType Valid values = YaDownloader.ALBUM_PATHS indexes
+     * @param oldAlbum  Old album (to append) or null (to create from scratch)
      * @return New album
      */
-    public Album fetchAlbum(int albumType, Album... oldAlbumVararg) {
-        Album oldAlbum = null;
+    @WorkerThread
+    @NonNull
+    public Album fetchAlbum(@AlbumType int albumType, @Nullable Album oldAlbum) {
         String urlString;
-        if (oldAlbumVararg.length > 0) {            // Create on top of oldAlbum
-            oldAlbum = oldAlbumVararg[0];
+        if (oldAlbum != null) {                     // Create on top of oldAlbum
             urlString = oldAlbum.getNextPage();
         } else {                                    // Create from scratch
             String albumPath = ALBUM_PATHS[albumType];
@@ -187,5 +192,10 @@ public class YaDownloader {
 
         String offset = "poddate;" + dateFormat.format(prevDate) + "/";
         return buildUrl("podhistory", offset);
+    }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntRange(from = 0, to = 2)  // Must match ALBUM_PATHS.length - 1
+    public @interface AlbumType {
     }
 }

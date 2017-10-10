@@ -12,29 +12,34 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
-import org.parceler.Parcels;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import gmk57.yaphotos.YaDownloader.AlbumType;
 
 public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Callbacks {
     private static final String TAG = "PhotoActivity";
-    private static final String EXTRA_ALBUM = "gmk57.yaphotos.album";
+    private static final String EXTRA_ALBUM_TYPE = "gmk57.yaphotos.albumType";
     private static final String EXTRA_POSITION = "gmk57.yaphotos.position";
     private static final String KEY_UI_VISIBLE = "uiVisible";
 
     private boolean mUiVisible = true;
+    private int mAlbumType;
     private Album mAlbum;
     private ViewPager mViewPager;
 
     /**
      * Creates Intent to start this Activity with necessary arguments.
      *
-     * @param context  Context to build Intent
-     * @param album    Current album
-     * @param position Current position
+     * @param context   Context to build Intent
+     * @param albumType Current album type
+     * @param position  Current position
      * @return Intent to start this activity
      */
-    public static Intent newIntent(Context context, Album album, int position) {
+    public static Intent newIntent(Context context, @AlbumType int albumType, int position) {
         Intent intent = new Intent(context, PhotoActivity.class);
-        intent.putExtra(EXTRA_ALBUM, Parcels.wrap(album));
+        intent.putExtra(EXTRA_ALBUM_TYPE, albumType);
         intent.putExtra(EXTRA_POSITION, position);
         return intent;
     }
@@ -46,11 +51,14 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
         }
         super.onCreate(savedInstanceState);
 
-        mAlbum = Parcels.unwrap(getIntent().getParcelableExtra(EXTRA_ALBUM));
+        mAlbumType = getIntent().getIntExtra(EXTRA_ALBUM_TYPE, 0);
         int position = getIntent().getIntExtra(EXTRA_POSITION, 0);
         if (savedInstanceState != null) {
             mUiVisible = savedInstanceState.getBoolean(KEY_UI_VISIBLE, true);
         }
+
+        mAlbum = Repository.getInstance().getAlbum(mAlbumType);
+        EventBus.getDefault().register(this);
 
         setContentView(R.layout.viewpager);
         mViewPager = findViewById(R.id.pager);
@@ -70,6 +78,19 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_UI_VISIBLE, mUiVisible);
     }
+
+    @Override
+    protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        super.onDestroy();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onAlbumLoaded(AlbumLoadedEvent event) {
+        mAlbum = event.getAlbum();
+        mViewPager.getAdapter().notifyDataSetChanged();
+    }
+
 
     /**
      * Hides or shows system UI and ActionBar. Status bar is completely hidden (on API >= 16)

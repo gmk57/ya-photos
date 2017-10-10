@@ -137,6 +137,7 @@ public class PhotoFragment extends BaseFragment implements Callback {
      * fires implicit intent (with chooser). File is shared through FileProvider.
      * // TODO: File operations on background thread
      * // TODO: Delete old files
+     * // TODO: Or switch to Glide and share from its cache?
      */
     private void shareImage() {
         Picasso.with(getActivity()).load(mPhoto.getImageUrl()).into(new Target() {
