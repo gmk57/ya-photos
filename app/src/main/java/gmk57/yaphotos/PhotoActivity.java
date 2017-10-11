@@ -65,6 +65,15 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
         mViewPager.setAdapter(new PhotoPagerAdapter(getSupportFragmentManager()));
         mViewPager.setCurrentItem(position);
         mViewPager.setOffscreenPageLimit(3);
+
+        mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                if (position + 10 > mAlbum.getSize()) {
+                    Repository.getInstance().fetchNextPage(mAlbumType);
+                }
+            }
+        });
     }
 
     @Override

@@ -21,6 +21,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
   - Swipe navigation
   - Fullscreen mode
   - Share button
+  - Endless scrolling
   - Image size auto-adjusted to screen size
   - Progress and error indicators
 - Workaround to calculate next page for "Photos of the day" album
