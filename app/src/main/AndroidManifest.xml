@@ -20,6 +20,10 @@
         <activity
             android:name=".PhotoActivity"
             android:theme="@style/PhotoTheme"/>
+        <activity
+            android:name=".WebViewActivity"
+            android:parentActivityName=".AlbumActivity"
+            android:theme="@style/StandardTheme"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"

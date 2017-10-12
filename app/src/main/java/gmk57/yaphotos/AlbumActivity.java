@@ -10,9 +10,12 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 
 public class AlbumActivity extends AppCompatActivity {
     private static final String TAG = "AlbumActivity";
+    private static final String URL_ASSET_ABOUT = "file:///android_asset/about.htm";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -30,6 +33,23 @@ public class AlbumActivity extends AppCompatActivity {
 
         TabLayout tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(viewPager);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_album, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_about:
+                startActivity(WebViewActivity.newIntent(this, URL_ASSET_ABOUT));
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private class AlbumPagerAdapter extends FragmentPagerAdapter {

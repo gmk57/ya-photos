@@ -42,6 +42,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - StrictMode
 - Thread
 - ViewPager, FragmentStatePagerAdapter, FragmentPagerAdapter
+- WebView
 
 ## Installation
 
@@ -54,3 +55,5 @@ Project is distributed under MIT license.
 Third-party libraries are distributed under their own terms, please see their repositories & websites.
 
 The use of Yandex.Fotki service and its API is regulated by [API User Agreement](https://yandex.ru/legal/fotki_api/), [Yandex.Fotki Service Terms Of Use](https://yandex.ru/legal/fotki_termsofuse/) and general [User Agreement for Yandex Services](https://yandex.com/legal/rules/).
+
+All photos are exclusive property of their right holders, available for personal non-commercial use under certain conditions (see links above).
