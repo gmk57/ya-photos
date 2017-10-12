@@ -18,6 +18,10 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import gmk57.yaphotos.YaDownloader.AlbumType;
 
+/**
+ * Detail screen with ViewPager of PhotoFragments. Should be started with intent constructed through
+ * <code>newIntent</code> factory method.
+ */
 public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Callbacks {
     private static final String TAG = "PhotoActivity";
     private static final String EXTRA_ALBUM_TYPE = "gmk57.yaphotos.albumType";

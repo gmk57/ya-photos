@@ -35,7 +35,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Fragment to display full-screen photo
+ * Fragment to display a full-screen photo. Should be constructed through <code>newInstance</code>
+ * factory method.
  */
 public class PhotoFragment extends BaseFragment implements Callback {
     private static final String TAG = "PhotoFragment";

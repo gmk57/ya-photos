@@ -11,6 +11,9 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import gmk57.yaphotos.YaDownloader.AlbumType;
 
+/**
+ * Singleton class, responsible for creating and holding model objects.
+ */
 public class Repository {
     private static final String TAG = "Repository";
     private final AtomicReferenceArray<Album> mAlbums;

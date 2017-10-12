@@ -13,6 +13,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+/**
+ * Main app screen with ViewPager of AlbumFragments.
+ */
 public class AlbumActivity extends AppCompatActivity {
     private static final String TAG = "AlbumActivity";
     private static final String URL_ASSET_ABOUT = "file:///android_asset/about.htm";

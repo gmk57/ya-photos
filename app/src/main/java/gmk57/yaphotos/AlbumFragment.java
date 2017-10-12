@@ -21,8 +21,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import gmk57.yaphotos.YaDownloader.AlbumType;
 
 /**
- * Main app fragment to display album thumbnails, with scrolling (endless, if
- * possible)
+ * Main app fragment to display album thumbnails, with scrolling (endless, if possible). Should be
+ * constructed through <code>newInstance</code> factory method.
  */
 public class AlbumFragment extends BaseFragment {
     private static final String TAG = "AlbumFragment";
