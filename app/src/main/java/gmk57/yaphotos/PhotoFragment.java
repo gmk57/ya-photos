@@ -89,7 +89,9 @@ public class PhotoFragment extends BaseFragment implements Callback {
 
         // This fragment is currently selected, so we can set ActionBar subtitle
         AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.getSupportActionBar().setSubtitle(mPhoto.getTitle());
+        String subtitle = getString(R.string.subtitle_template, mPhoto.getTitle(),
+                mPhoto.getAuthor());
+        activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
     @Override
@@ -97,6 +99,9 @@ public class PhotoFragment extends BaseFragment implements Callback {
         switch (item.getItemId()) {
             case R.id.menu_item_share:
                 shareImage();
+                return true;
+            case R.id.menu_item_webpage:
+                startActivity(new Intent(Intent.ACTION_VIEW, mPhoto.getPageUri()));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -8,4 +8,10 @@
         android:title="@string/share_action"
         app:showAsAction="ifRoom"/>
 
+    <item
+        android:id="@+id/menu_item_webpage"
+        android:icon="@drawable/ic_webpage"
+        android:title="@string/webpage"
+        app:showAsAction="ifRoom"/>
+
 </menu>

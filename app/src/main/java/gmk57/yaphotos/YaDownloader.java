@@ -139,6 +139,8 @@ public class YaDownloader {
             JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
             Photo photo = new Photo();
             photo.setTitle(photoJsonObject.getString("title"));
+            photo.setAuthor(photoJsonObject.getString("author"));
+            photo.setPageUrl(photoJsonObject.getJSONObject("links").getString("alternate"));
 
             JSONObject photoImgJsonObject = photoJsonObject.getJSONObject("img");
             if (!photoImgJsonObject.has("M")) {

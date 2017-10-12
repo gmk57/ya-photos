@@ -10,4 +10,6 @@
     <string name="try_again">Try again</string>
     <string name="download_failed">Download failed. Please try again later.\n</string>
     <string name="about">About</string>
+    <string name="webpage">Web page</string>
+    <string name="subtitle_template">%1$s \u00A9 %2$s</string>
 </resources>
