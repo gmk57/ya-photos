@@ -13,13 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,6 +23,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Class to perform low-level network operations and API-specific operations.
@@ -37,32 +37,18 @@ public class YaDownloader {
     private static final String TAG = "YaDownloader";
 
     private String downloadString(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        InputStream in = null;
-
+        OkHttpClient client = Repository.getInstance().getOkHttpClient();
+        Request request = new Request.Builder().url(urlString).build();
+        Response response = null;
         try {
-            in = connection.getInputStream();
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new IOException(connection.getResponseMessage() + ": with " + urlString);
+            response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new IOException(response.code() + " " + response.message() + ": " + urlString);
             }
-
-            int bytesRead;
-            byte[] buffer = new byte[1024];
-            while ((bytesRead = in.read(buffer)) > 0) {
-                out.write(buffer, 0, bytesRead);
-            }
-            return new String(out.toByteArray());
-
+            //noinspection ConstantConditions
+            return response.body().string();
         } finally {
-            try {
-                if (in != null) in.close();
-            } catch (IOException e) {/*closing quietly*/}
-            try {
-                out.close();
-            } catch (IOException e) {/*closing quietly*/}
-            connection.disconnect();
+            if (response != null) response.close();
         }
     }
 

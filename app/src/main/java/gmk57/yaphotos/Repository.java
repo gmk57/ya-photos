@@ -3,6 +3,7 @@ package gmk57.yaphotos;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import gmk57.yaphotos.YaDownloader.AlbumType;
+import okhttp3.OkHttpClient;
 
 /**
  * Singleton class, responsible for creating and holding model objects.
@@ -79,8 +81,25 @@ public class Repository {
         }
     }
 
+    /**
+     * Provides single instance of OkHttpClient (as recommended by its authors), initialized on the
+     * first invocation.
+     *
+     * @return Instance of OkHttpClient
+     * @see <a href="https://plus.google.com/118239425803358296962/posts/5nzAvPaitHu">Answer by
+     * Jake Wharton</a>
+     */
+    @WorkerThread
+    public OkHttpClient getOkHttpClient() {
+        return OkHttpClientHolder.OK_HTTP_CLIENT;
+    }
+
     private static class RepositoryHolder {
         private final static Repository INSTANCE = new Repository();
+    }
+
+    private static class OkHttpClientHolder {
+        private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
     }
 
     private class FetchAlbumThread extends Thread {

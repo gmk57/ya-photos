@@ -5,7 +5,9 @@
       <w>fileprovider</w>
       <w>github</w>
       <w>greenrobot</w>
+      <w>okhttp</w>
       <w>parceler</w>
+      <w>poddate</w>
       <w>podhistory</w>
       <w>preloading</w>
       <w>preloads</w>
