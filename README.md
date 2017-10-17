@@ -30,6 +30,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 ## Technologies used
 
 - [EventBus](https://github.com/greenrobot/EventBus)
+- [Gson](https://github.com/google/gson) with custom JsonDeserializers
 - [OkHttp](https://github.com/square/okhttp)
 - [Parceler](https://github.com/johncarl81/parceler)
 - [Picasso](https://github.com/square/picasso)
@@ -38,7 +39,6 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Date, Calendar, SimpleDateFormat
 - FileProvider
 - Fragment, FragmentManager
-- JSONObject, JSONArray
 - RecyclerView, GridLayoutManager
 - StrictMode
 - Thread

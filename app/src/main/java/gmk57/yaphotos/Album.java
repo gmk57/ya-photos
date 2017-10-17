@@ -1,23 +1,21 @@
 package gmk57.yaphotos;
 
+import com.google.gson.annotations.JsonAdapter;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonAdapter(YaDownloader.AlbumDeserializer.class)
 public class Album {
     private List<Photo> mPhotos;
     private String mNextPage;
 
-    /**
-     * Creates new Album
-     *
-     * @param oldAlbum If provided, new album will contain all photos of old album
-     */
-    public Album(Album oldAlbum) {
-        if (oldAlbum == null) {
-            mPhotos = new ArrayList<>();
-        } else {
-            mPhotos = new ArrayList<>(oldAlbum.mPhotos);
-        }
+    public Album() {
+        mPhotos = new ArrayList<>();
+    }
+
+    public void setPhotos(List<Photo> photos) {
+        mPhotos = photos;
     }
 
     public String getNextPage() {
@@ -38,5 +36,11 @@ public class Album {
 
     public int getSize() {
         return mPhotos.size();
+    }
+
+    public void appendToOldAlbum(Album oldAlbum) {
+        List<Photo> photos = new ArrayList<>(oldAlbum.mPhotos);
+        photos.addAll(mPhotos);
+        mPhotos = photos;
     }
 }

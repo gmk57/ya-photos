@@ -2,16 +2,20 @@ package gmk57.yaphotos;
 
 import android.net.Uri;
 
+import com.google.gson.annotations.JsonAdapter;
+
 import org.parceler.Parcel;
 
 @SuppressWarnings("WeakerAccess")
 @Parcel
+@JsonAdapter(YaDownloader.PhotoDeserializer.class)
 public class Photo {
     String mTitle;
     String mAuthor;
     String mThumbnailUrl;
     String mImageUrl;
     String mPageUrl;
+    String mPodDate;
 
     @Override
     public String toString() {
@@ -60,5 +64,13 @@ public class Photo {
 
     public Uri getPageUri() {
         return Uri.parse(mPageUrl);
+    }
+
+    public String getPodDate() {
+        return mPodDate;
+    }
+
+    public void setPodDate(String podDate) {
+        mPodDate = podDate;
     }
 }

@@ -26,7 +26,7 @@ public class Repository {
         mAlbums = new AtomicReferenceArray<>(length);
         mFetchRunning = new AtomicBoolean[length];
         for (int i = 0; i < mFetchRunning.length; i++) {
-            mAlbums.set(i, new Album(null));
+            mAlbums.set(i, new Album());
             mFetchRunning[i] = new AtomicBoolean();
         }
     }
