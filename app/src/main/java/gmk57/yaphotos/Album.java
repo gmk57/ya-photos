@@ -5,17 +5,14 @@ import com.google.gson.annotations.JsonAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
-@JsonAdapter(YaDownloader.AlbumDeserializer.class)
+@JsonAdapter(AlbumJsonAdapter.class)
 public class Album {
     private List<Photo> mPhotos;
     private String mNextPage;
+    private String mLastPodDate;
 
     public Album() {
         mPhotos = new ArrayList<>();
-    }
-
-    public void setPhotos(List<Photo> photos) {
-        mPhotos = photos;
     }
 
     public String getNextPage() {
@@ -24,6 +21,14 @@ public class Album {
 
     public void setNextPage(String nextPage) {
         mNextPage = nextPage;
+    }
+
+    public String getLastPodDate() {
+        return mLastPodDate;
+    }
+
+    public void setLastPodDate(String lastPodDate) {
+        mLastPodDate = lastPodDate;
     }
 
     public void addPhoto(Photo photo) {
