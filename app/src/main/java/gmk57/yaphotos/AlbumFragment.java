@@ -18,7 +18,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import gmk57.yaphotos.YaDownloader.AlbumType;
+import gmk57.yaphotos.Repository.AlbumType;
 
 /**
  * Main app fragment to display album thumbnails, with scrolling (endless, if possible). Should be

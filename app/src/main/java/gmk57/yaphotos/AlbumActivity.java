@@ -67,7 +67,7 @@ public class AlbumActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return YaDownloader.ALBUM_PATHS.length;
+            return Repository.ALBUM_PATHS.length;
         }
 
         @Override

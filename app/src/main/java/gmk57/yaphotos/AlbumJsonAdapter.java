@@ -33,10 +33,14 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
     @Override
     public Album read(JsonReader in) throws IOException {
         Album album = new Album();
+        String id = "";
 
         in.beginObject();
         while (in.hasNext()) {
             switch (in.nextName()) {
+                case "id":
+                    id = in.nextString();
+                    break;
                 case "entries":
                     in.beginArray();
                     while (in.hasNext()) {
@@ -48,7 +52,7 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
                     in.beginObject();
                     while (in.hasNext()) {
                         if (in.nextName().equals("next")) {
-                            album.setNextPage(in.nextString());
+                            album.setNextOffset(in.nextString());
                         } else {
                             in.skipValue();
                         }
@@ -61,9 +65,12 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
         }
         in.endObject();
 
-        if (album.getNextPage() == null && album.getLastPodDate() != null) {
+        // Try workaround to generate next page offset, if applicable
+        if (album.getNextOffset() == null   // TODO: Not needed anymore?
+                && id.equals("urn:yandex:fotki:pod:history") // Workaround isn't valid for other types
+                && album.getLastPodDate() != null) {
             try {
-                album.setNextPage(calculateNextPage(album.getLastPodDate()));
+                album.setNextOffset(calculateNextOffset(album.getLastPodDate()));
             } catch (ParseException e) {/* Workaround failed, not a big deal */}
         }
 
@@ -142,7 +149,7 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
     }
 
     /**
-     * Workaround to calculate next page for "Photos of the day" album.
+     * Workaround to calculate next page offset for "Photos of the day" album.
      * <p>
      * For "Recent" and "Popular" albums next pages do not exist. For "Photos of the day" they
      * exist all the way back to year 2007, but for unknown reason corresponding JSON entry is
@@ -155,7 +162,7 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
      * @return URL of next page
      * @throws ParseException If DateFormat parsing fails
      */
-    private String calculateNextPage(String lastPodDate) throws ParseException {
+    private String calculateNextOffset(String lastPodDate) throws ParseException {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date lastDate = dateFormat.parse(lastPodDate);
@@ -165,7 +172,6 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
         calendar.add(Calendar.DAY_OF_YEAR, -1);
         Date prevDate = calendar.getTime();
 
-        String offset = "poddate;" + dateFormat.format(prevDate) + "/";
-        return new YaDownloader().buildUrl("podhistory", offset);
+        return "poddate;" + dateFormat.format(prevDate) + "/";
     }
 }

@@ -8,19 +8,19 @@ import java.util.List;
 @JsonAdapter(AlbumJsonAdapter.class)
 public class Album {
     private List<Photo> mPhotos;
-    private String mNextPage;
+    private String mNextOffset;
     private String mLastPodDate;
 
     public Album() {
         mPhotos = new ArrayList<>();
     }
 
-    public String getNextPage() {
-        return mNextPage;
+    public String getNextOffset() {
+        return mNextOffset;
     }
 
-    public void setNextPage(String nextPage) {
-        mNextPage = nextPage;
+    public void setNextOffset(String nextOffset) {
+        mNextOffset = nextOffset;
     }
 
     public String getLastPodDate() {

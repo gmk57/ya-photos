@@ -31,9 +31,9 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 
 - [EventBus](https://github.com/greenrobot/EventBus)
 - [Gson](https://github.com/google/gson) with custom TypeAdapter
-- [OkHttp](https://github.com/square/okhttp)
 - [Parceler](https://github.com/johncarl81/parceler)
 - [Picasso](https://github.com/square/picasso)
+- [Retrofit](https://github.com/square/retrofit)
 - AtomicBoolean, AtomicReferenceArray
 - CoordinatorLayout, AppBarLayout, Toolbar, TabLayout
 - Date, Calendar, SimpleDateFormat

@@ -1,6 +1,6 @@
 package gmk57.yaphotos;
 
-import gmk57.yaphotos.YaDownloader.AlbumType;
+import gmk57.yaphotos.Repository.AlbumType;
 
 public class AlbumLoadedEvent {
     private int mAlbumType;

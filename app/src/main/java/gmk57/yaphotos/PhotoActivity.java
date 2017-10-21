@@ -16,7 +16,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import gmk57.yaphotos.YaDownloader.AlbumType;
+import gmk57.yaphotos.Repository.AlbumType;
 
 /**
  * Detail screen with ViewPager of PhotoFragments. Should be started with intent constructed through
