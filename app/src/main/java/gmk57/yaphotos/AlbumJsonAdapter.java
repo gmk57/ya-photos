@@ -48,17 +48,6 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
                     }
                     in.endArray();
                     break;
-                case "links":  // TODO: Not needed anymore?
-                    in.beginObject();
-                    while (in.hasNext()) {
-                        if (in.nextName().equals("next")) {
-                            album.setNextOffset(in.nextString());
-                        } else {
-                            in.skipValue();
-                        }
-                    }
-                    in.endObject();
-                    break;
                 default:
                     in.skipValue();
             }
@@ -66,9 +55,7 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
         in.endObject();
 
         // Try workaround to generate next page offset, if applicable
-        if (album.getNextOffset() == null   // TODO: Not needed anymore?
-                && id.equals("urn:yandex:fotki:pod:history") // Workaround isn't valid for other types
-                && album.getLastPodDate() != null) {
+        if (id.equals("urn:yandex:fotki:pod:history") && album.getLastPodDate() != null) {
             try {
                 album.setNextOffset(calculateNextOffset(album.getLastPodDate()));
             } catch (ParseException e) {/* Workaround failed, not a big deal */}

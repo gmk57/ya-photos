@@ -100,8 +100,10 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onAlbumLoaded(AlbumLoadedEvent event) {
-        mAlbum = event.getAlbum();
-        mViewPager.getAdapter().notifyDataSetChanged();
+        if (event.getAlbumType() == mAlbumType) {
+            mAlbum = Repository.getInstance().getAlbum(mAlbumType);
+            mViewPager.getAdapter().notifyDataSetChanged();
+        }
     }
 
 

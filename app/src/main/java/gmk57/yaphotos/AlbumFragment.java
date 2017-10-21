@@ -4,6 +4,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -33,6 +34,7 @@ public class AlbumFragment extends BaseFragment {
     private PhotoAdapter mPhotoAdapter;
     private RecyclerView mRecyclerView;
     private Repository mRepository;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     public static AlbumFragment newInstance(@AlbumType int albumType) {
         Bundle args = new Bundle();
@@ -93,6 +95,14 @@ public class AlbumFragment extends BaseFragment {
             }
         });
 
+        mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mRepository.reloadAlbum(mAlbumType);
+            }
+        });
+
         return view;
     }
 
@@ -132,8 +142,11 @@ public class AlbumFragment extends BaseFragment {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onAlbumLoaded(AlbumLoadedEvent event) {
         if (event.getAlbumType() == mAlbumType) {
-            if (event.getAlbum().getSize() > 0) {
-                mPhotoAdapter.setAlbum(event.getAlbum());
+            mSwipeRefreshLayout.setRefreshing(false);
+            Album album = mRepository.getAlbum(mAlbumType);
+
+            if (album.getSize() > 0) {
+                mPhotoAdapter.setAlbum(album);
                 setupProgressState(STATE_OK);
             } else {
                 setupProgressState(STATE_ERROR);
@@ -202,14 +215,8 @@ public class AlbumFragment extends BaseFragment {
         }
 
         public void setAlbum(Album album) {
-            int oldSize = mAlbum.getSize();
             mAlbum = album;
-            if (album.getSize() == 0) {         // Clearing album
-                notifyDataSetChanged();
-            } else {                            // Appending new photos
-                int newItems = album.getSize() - oldSize;
-                notifyItemRangeInserted(oldSize, newItems);
-            }
+            notifyDataSetChanged();
         }
     }
 }

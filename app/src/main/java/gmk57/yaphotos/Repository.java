@@ -78,8 +78,8 @@ public class Repository {
     }
 
     /**
-     * Starts fetching next page of album, if it exists and this album isn't currently loading.
-     * Callers should subscribe to AlbumLoadedEvent through EventBus to receive results.
+     * Starts fetching next page of album, if next page exists and this album isn't currently
+     * loading. Callers should subscribe to AlbumLoadedEvent through EventBus to receive results.
      *
      * @param albumType Album type
      */
@@ -146,6 +146,17 @@ public class Repository {
         private int mAlbumType;
         private Album mOldAlbum;
 
+        /**
+         * Fetches JSON from server, parses it and sends AlbumLoadedEvent to subscribers.
+         * <p>
+         * If old album is provided, new album will be built on top of it, appending photos of its
+         * next page. Otherwise, album will be built from scratch, according to provided album type.
+         * <p>
+         * In case of fetch failure, album in repository remains untouched.
+         *
+         * @param albumType Valid values = ALBUM_PATHS indexes
+         * @param oldAlbum  Old album (to append) or null (to create from scratch)
+         */
         public FetchAlbumThread(@AlbumType int albumType, @Nullable Album oldAlbum) {
             mAlbumType = albumType;
             mOldAlbum = oldAlbum;
@@ -155,13 +166,18 @@ public class Repository {
         public void run() {
             String albumPath = ALBUM_PATHS[mAlbumType];
             String offset = (mOldAlbum == null) ? "" : mOldAlbum.getNextOffset();
-            Album album = new Album();
             NetworkLayer networkLayer = getNetworkLayer();
 
             try {
                 Response<Album> response = networkLayer.downloadAlbum(albumPath, offset).execute();
+
                 if (response.isSuccessful()) {
-                    album = response.body();
+                    Album album = response.body();
+                    if (mOldAlbum != null && album != null) {
+                        album.appendToOldAlbum(mOldAlbum);
+                    }
+                    mAlbums.set(mAlbumType, album);
+
                 } else {
                     Log.e(TAG, "Failed to fetch album: " + response.code() + " "
                             + response.message());
@@ -170,12 +186,8 @@ public class Repository {
                 Log.e(TAG, "Failed to fetch album: " + e);
             }
 
-            if (mOldAlbum != null && album != null) {
-                album.appendToOldAlbum(mOldAlbum);
-            }
-            mAlbums.set(mAlbumType, album);
+            EventBus.getDefault().post(new AlbumLoadedEvent(mAlbumType));
             mFetchRunning[mAlbumType].set(false);
-            EventBus.getDefault().post(new AlbumLoadedEvent(mAlbumType, album));
         }
     }
 }

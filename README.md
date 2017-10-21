@@ -13,6 +13,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Album view:
   - Swipe and tab navigation
   - App bar scrolling off-screen
+  - Pull to refresh
   - Thumbnails caching and preloading (with lower priority)
   - Endless scrolling
   - Thumbnail size and column number auto-adjusted to screen size
@@ -41,6 +42,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Fragment, FragmentManager
 - RecyclerView, GridLayoutManager
 - StrictMode
+- SwipeRefreshLayout
 - Thread
 - ViewPager, FragmentStatePagerAdapter, FragmentPagerAdapter
 - WebView
