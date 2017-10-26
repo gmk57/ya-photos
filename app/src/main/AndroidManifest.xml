@@ -26,7 +26,7 @@
             android:theme="@style/StandardTheme"/>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name=".ImageFileProvider"
             android:authorities="gmk57.yaphotos.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

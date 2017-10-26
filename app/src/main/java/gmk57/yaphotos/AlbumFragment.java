@@ -13,11 +13,20 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.ListPreloader.PreloadModelProvider;
+import com.bumptech.glide.ListPreloader.PreloadSizeProvider;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.util.FixedPreloadSizeProvider;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Collections;
+import java.util.List;
 
 import gmk57.yaphotos.Repository.AlbumType;
 
@@ -95,6 +104,12 @@ public class AlbumFragment extends BaseFragment {
             }
         });
 
+        PreloadSizeProvider<Photo> sizeProvider =
+                new FixedPreloadSizeProvider<>(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
+        RecyclerViewPreloader<Photo> preloader = new RecyclerViewPreloader<>(this, mPhotoAdapter,
+                sizeProvider, 24);
+        mRecyclerView.addOnScrollListener(preloader);
+
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -167,9 +182,12 @@ public class AlbumFragment extends BaseFragment {
         public void bindPhoto(Photo photo, int position) {
             mPosition = position;
 
-            Picasso.with(getActivity())
+            GlideApp.with(AlbumFragment.this)
                     .load(photo.getThumbnailUrl())
                     .placeholder(android.R.drawable.ic_menu_gallery)
+                    // Prevents image corruption and keeps memory cache working on rotation
+                    .override(Target.SIZE_ORIGINAL)
+                    .dontTransform()  // Allows using memory cache for preloaded images
                     .into(mThumbnailImageView);
         }
 
@@ -179,12 +197,18 @@ public class AlbumFragment extends BaseFragment {
         }
     }
 
-    private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
+    private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder>
+            implements PreloadModelProvider<Photo> {
         private static final String TAG = "PhotoAdapter";
         private Album mAlbum;
 
         public PhotoAdapter(Album album) {
             mAlbum = album;
+        }
+
+        public void setAlbum(Album album) {
+            mAlbum = album;
+            notifyDataSetChanged();
         }
 
         @Override
@@ -198,15 +222,6 @@ public class AlbumFragment extends BaseFragment {
         public void onBindViewHolder(PhotoHolder holder, int position) {
             Photo photo = mAlbum.getPhoto(position);
             holder.bindPhoto(photo, position);
-
-            for (int offset : new int[]{8, -8, 16, -16, 24, -24}) {
-                if (position + offset >= 0 && position + offset < mAlbum.getSize()) {
-                    String url = mAlbum.getPhoto(position + offset).getThumbnailUrl();
-                    Picasso.with(getActivity())
-                            .load(url)
-                            .priority(Picasso.Priority.LOW).fetch();
-                }
-            }
         }
 
         @Override
@@ -214,9 +229,19 @@ public class AlbumFragment extends BaseFragment {
             return mAlbum.getSize();
         }
 
-        public void setAlbum(Album album) {
-            mAlbum = album;
-            notifyDataSetChanged();
+        @NonNull
+        @Override
+        public List<Photo> getPreloadItems(int position) {
+            return Collections.singletonList(mAlbum.getPhoto(position));
+        }
+
+        @Override
+        public RequestBuilder getPreloadRequestBuilder(Photo photo) {
+            return GlideApp.with(AlbumFragment.this)
+                    .load(photo.getThumbnailUrl())
+                    .override(Target.SIZE_ORIGINAL)
+                    .dontTransform()
+                    .priority(Priority.LOW);
         }
     }
 }

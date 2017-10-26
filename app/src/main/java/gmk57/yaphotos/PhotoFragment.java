@@ -1,12 +1,13 @@
 package gmk57.yaphotos;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,7 +15,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,29 +22,34 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 
 import org.parceler.Parcels;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Fragment to display a full-screen photo. Should be constructed through <code>newInstance</code>
  * factory method.
  */
-public class PhotoFragment extends BaseFragment implements Callback {
+public class PhotoFragment extends BaseFragment implements RequestListener<Drawable> {
     private static final String TAG = "PhotoFragment";
     private static final String ARG_PHOTO = "photo";
 
+    private boolean mIsImageLoaded;
+    private int mLoadFailedCount;
     private Callbacks mCallbacks;
     private ImageView mImageView;
     private Photo mPhoto;
+    private ShareTask mShareTask;
 
     public static PhotoFragment newInstance(Photo photo) {
         Bundle args = new Bundle();
@@ -76,9 +81,7 @@ public class PhotoFragment extends BaseFragment implements Callback {
         });
 
         setupProgressState(STATE_LOADING);
-        Picasso.with(getActivity())
-                .load(mPhoto.getImageUrl())
-                .into(mImageView, this);
+        loadImage();
 
         return view;
     }
@@ -87,6 +90,8 @@ public class PhotoFragment extends BaseFragment implements Callback {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.fragment_photo, menu);
+        MenuItem shareMenuItem = menu.findItem(R.id.menu_item_share);
+        shareMenuItem.setVisible(mIsImageLoaded);  // We can't share image before it's loaded
 
         // This fragment is currently selected, so we can set ActionBar subtitle
         AppCompatActivity activity = (AppCompatActivity) getActivity();
@@ -99,13 +104,20 @@ public class PhotoFragment extends BaseFragment implements Callback {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_item_share:
-                shareImage();
+                startShareTask();
                 return true;
             case R.id.menu_item_webpage:
                 startActivity(new Intent(Intent.ACTION_VIEW, mPhoto.getPageUri()));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void startShareTask() {
+        if (mShareTask == null || mShareTask.getStatus().equals(AsyncTask.Status.FINISHED)) {
+            mShareTask = new ShareTask(getActivity(), mPhoto);
+            mShareTask.execute();
         }
     }
 
@@ -122,81 +134,56 @@ public class PhotoFragment extends BaseFragment implements Callback {
     }
 
     @Override
-    public void onSuccess() {
-        setupProgressState(STATE_OK);
+    public void onStop() {
+        if (mShareTask != null) {
+            mShareTask.cancel(false);
+        }
+        super.onStop();
     }
 
     @Override
-    public void onError() {
-        setupProgressState(STATE_ERROR);
+    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target,
+                                   DataSource dataSource, boolean isFirstResource) {
+        setupProgressState(STATE_OK);
+        if (mPhoto.getImageUrl().equals(model)) { // Full-size image loaded, we can show share button
+            mIsImageLoaded = true;
+            getActivity().invalidateOptionsMenu();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target,
+                                boolean isFirstResource) {
+        if (++mLoadFailedCount == 2) {  // Show error only if thumbnail and full image both failed
+            setupProgressState(STATE_ERROR);
+        }
+        return false;
     }
 
     @Override
     protected void tryAgain() {
-        Picasso.with(getActivity())
-                .load(mPhoto.getImageUrl())
-                .into(mImageView, this);
+        mLoadFailedCount = 0;
+        loadImage();
     }
 
     /**
-     * Loads image again (hopefully from Picasso memory cache), saves it to cache dir, builds and
-     * fires implicit intent (with chooser). File is shared through FileProvider.
-     * // TODO: File operations on background thread
-     * // TODO: Delete old files
-     * // TODO: Or switch to Glide and share from its cache?
+     * Loads image into ImageView. While loading full-size image, thumbnail is displayed to sweeten
+     * the waiting time: it loads much faster and in many cases is already available in Glide memory
+     * cache, thanks to being displayed in AlbumFragment.
      */
-    private void shareImage() {
-        Picasso.with(getActivity()).load(mPhoto.getImageUrl()).into(new Target() {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                try {
-                    File shareDir = new File(getContext().getCacheDir(), "my_share");
-                    shareDir.mkdirs();
-                    File imageFile = File.createTempFile("photo", ".jpg", shareDir);
-                    FileOutputStream outputStream = new FileOutputStream(imageFile);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
-                    outputStream.close();
+    private void loadImage() {
+        RequestBuilder<Drawable> thumbnailRequest = GlideApp.with(this)
+                .load(mPhoto.getThumbnailUrl())
+                .listener(this);
 
-                    Uri imageUri = FileProvider.getUriForFile(getActivity(),
-                            "gmk57.yaphotos.fileprovider", imageFile);
-                    Intent shareIntent = ShareCompat.IntentBuilder.from(getActivity())
-                            .setStream(imageUri)
-                            .setSubject(mPhoto.getTitle())
-                            .setText(mPhoto.getTitle())
-                            .setType("image/jpeg")
-                            .getIntent();
-
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                        // Temporary permissions don't work prior to API 16, and recommended way
-                        // via intent.setData() breaks most target apps.
-                        // See https://medium.com/@ashughes/after-further-investigation-it-seems-that-it-is-not-correct-to-call-setdata-cfd5361186ce
-                        List<ResolveInfo> resolveInfoList = getActivity().getPackageManager()
-                                .queryIntentActivities(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
-                        for (ResolveInfo resolveInfo : resolveInfoList) {
-                            String packageName = resolveInfo.activityInfo.packageName;
-                            getActivity().grantUriPermission(packageName, imageUri,
-                                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
-                    }
-
-                    // ShareCompat.IntentBuilder.createChooserIntent() looks nice, but breaks
-                    // above workaround for API < 16.
-                    startActivity(Intent.createChooser(shareIntent, getResources()
-                            .getString(R.string.share_chooser_title)));
-
-                } catch (IOException | SecurityException e) {
-                    Log.e(TAG, "Can't save file for sharing: " + e);
-                }
-            }
-
-            @Override
-            public void onBitmapFailed(Drawable errorDrawable) {
-                Log.e(TAG, "Can't load file for sharing");
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {/* not needed */}
-        });
+        GlideApp.with(this)
+                .load(mPhoto.getImageUrl())
+                .override(Target.SIZE_ORIGINAL)
+                .dontTransform()
+                .thumbnail(thumbnailRequest)
+                .listener(this)
+                .into(mImageView);
     }
 
     /**
@@ -204,5 +191,78 @@ public class PhotoFragment extends BaseFragment implements Callback {
      */
     public interface Callbacks {
         void onClick();
+    }
+
+    /**
+     * Loads image again (hopefully from Glide disk cache) and shares it directly from cache through
+     * FileProvider.
+     * <p>
+     * Code for dealing with Glide cache is based on
+     * <a href="https://github.com/bumptech/glide/issues/459#issuecomment-99960446">
+     * this code samples by TWiStErRob</a>
+     */
+    private static class ShareTask extends AsyncTask<Void, Void, Intent> {
+        private static final String TAG = "ShareTask";
+        private Activity mActivity;
+        private Photo mPhoto;
+
+        public ShareTask(Activity activity, Photo photo) {
+            mActivity = activity;
+            mPhoto = photo;
+        }
+
+        @Override
+        protected Intent doInBackground(Void... params) {
+            try {
+                File file = GlideApp.with(mActivity)
+                        .downloadOnly()
+                        .load(mPhoto.getImageUrl())
+                        .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+                        .get();
+
+                if (isCancelled()) {  // Typically it's too fast to be cancelled, but just in case
+                    return null;
+                }
+                Uri uri = FileProvider.getUriForFile(mActivity, "gmk57.yaphotos.fileprovider", file);
+                return createIntent(uri);
+
+            } catch (InterruptedException | ExecutionException e) {
+                return null;  // We'll show toast in onPostExecute
+            }
+        }
+
+        private Intent createIntent(Uri uri) {
+            Intent intent = ShareCompat.IntentBuilder.from(mActivity)
+                    .setStream(uri)
+                    .setSubject(mPhoto.getTitle())
+                    .setText(mPhoto.getTitle())
+                    .setType("image/jpeg")
+                    .getIntent();  // createChooserIntent() breaks workaround below for API < 16
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                // Temporary permissions don't work prior to API 16, and recommended way
+                // via intent.setData() breaks most target apps. See:
+                // https://medium.com/@ashughes/after-further-investigation-it-seems-that-it-is-not-correct-to-call-setdata-cfd5361186ce
+                List<ResolveInfo> resolveInfoList = mActivity.getPackageManager()
+                        .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo resolveInfo : resolveInfoList) {
+                    String packageName = resolveInfo.activityInfo.packageName;
+                    mActivity.grantUriPermission(packageName, uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+            }
+            return intent;
+        }
+
+        @Override
+        protected void onPostExecute(Intent intent) {
+            if (intent == null) {
+                Toast.makeText(mActivity, R.string.sharing_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            mActivity.startActivity(Intent.createChooser(intent, mActivity.getResources()
+                    .getString(R.string.share_chooser_title)));
+        }
     }
 }

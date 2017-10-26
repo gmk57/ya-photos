@@ -24,17 +24,19 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
   - Share button
   - Link to web page
   - Endless scrolling
+  - Thumbnail preview while loading full-size image
   - Image size auto-adjusted to screen size
   - Progress and error indicators
 - Workaround to calculate next page for "Photos of the day" album
 
 ## Technologies used
 
-- [EventBus](https://github.com/greenrobot/EventBus)
+- [EventBus](http://greenrobot.org/eventbus/)
+- [Glide](http://bumptech.github.io/glide/) with RecyclerViewPreloader
 - [Gson](https://github.com/google/gson) with custom TypeAdapter
-- [Parceler](https://github.com/johncarl81/parceler)
-- [Picasso](https://github.com/square/picasso)
-- [Retrofit](https://github.com/square/retrofit)
+- [Parceler](http://parceler.org/)
+- [Retrofit](http://square.github.io/retrofit/)
+- AsyncTask
 - AtomicBoolean, AtomicReferenceArray
 - CoordinatorLayout, AppBarLayout, Toolbar, TabLayout
 - Date, Calendar, SimpleDateFormat
@@ -55,7 +57,7 @@ This is an Android Studio project.
 
 Project is distributed under MIT license.
 
-Third-party libraries are distributed under their own terms, please see their repositories & websites.
+Third-party libraries are distributed under their own terms, please see their websites & repositories.
 
 The use of Yandex.Fotki service and its API is regulated by [API User Agreement](https://yandex.ru/legal/fotki_api/), [Yandex.Fotki Service Terms Of Use](https://yandex.ru/legal/fotki_termsofuse/) and general [User Agreement for Yandex Services](https://yandex.com/legal/rules/).
 

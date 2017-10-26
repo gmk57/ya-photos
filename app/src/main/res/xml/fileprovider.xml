@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Points to default Glide cache folder, defined in
+    com.bumptech.glide.load.engine.cache.DiskCache.Factory.DEFAULT_DISK_CACHE_DIR -->
     <cache-path
         name="share"
-        path="my_share"/>
+        path="image_manager_disk_cache"/>
 </paths>

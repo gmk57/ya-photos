@@ -12,4 +12,5 @@
     <string name="about">About</string>
     <string name="webpage">Web page</string>
     <string name="subtitle_template">%1$s \u00A9 %2$s</string>
+    <string name="sharing_failed">Can\'t load file for sharing</string>
 </resources>
