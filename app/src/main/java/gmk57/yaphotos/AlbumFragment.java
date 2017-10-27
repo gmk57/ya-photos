@@ -106,17 +106,12 @@ public class AlbumFragment extends BaseFragment {
 
         PreloadSizeProvider<Photo> sizeProvider =
                 new FixedPreloadSizeProvider<>(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
-        RecyclerViewPreloader<Photo> preloader = new RecyclerViewPreloader<>(this, mPhotoAdapter,
-                sizeProvider, 24);
+        RecyclerViewPreloader<Photo> preloader = new RecyclerViewPreloader<>(this,
+                mPhotoAdapter, sizeProvider, 24);
         mRecyclerView.addOnScrollListener(preloader);
 
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                mRepository.reloadAlbum(mAlbumType);
-            }
-        });
+        mSwipeRefreshLayout.setOnRefreshListener(() -> mRepository.reloadAlbum(mAlbumType));
 
         return view;
     }

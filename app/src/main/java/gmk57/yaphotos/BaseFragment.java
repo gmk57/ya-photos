@@ -57,7 +57,7 @@ public abstract class BaseFragment extends Fragment {
         }
     }
 
-    @Nullable
+    @NonNull
     @Override
     public final View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
                                    @Nullable Bundle savedInstanceState) {
@@ -67,12 +67,9 @@ public abstract class BaseFragment extends Fragment {
         mErrorLayout = view.findViewById(R.id.error_layout);
         Button tryAgainButton = view.findViewById(R.id.try_again_button);
         if (tryAgainButton != null) {
-            tryAgainButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setupProgressState(STATE_LOADING);
-                    tryAgain();
-                }
+            tryAgainButton.setOnClickListener(v -> {
+                setupProgressState(STATE_LOADING);
+                tryAgain();
             });
         }
         setupProgressState(mProgressState);

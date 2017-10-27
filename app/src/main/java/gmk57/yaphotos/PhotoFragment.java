@@ -73,12 +73,7 @@ public class PhotoFragment extends BaseFragment implements RequestListener<Drawa
                            @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_photo, container, false);
         mImageView = view.findViewById(R.id.fullscreen_image_view);
-        mImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mCallbacks.onClick();
-            }
-        });
+        mImageView.setOnClickListener(v -> mCallbacks.onClick());
 
         setupProgressState(STATE_LOADING);
         loadImage();
