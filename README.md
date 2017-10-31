@@ -27,12 +27,15 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
   - Thumbnail preview while loading full-size image
   - Image size auto-adjusted to screen size
   - Progress and error indicators
+- Multi-layer model repository (memory/database/network)
+- Persistence for better offline UX
 - Workaround to calculate next page for "Photos of the day" album
 
 ## Technologies used
 
 - [EventBus](http://greenrobot.org/eventbus/)
 - [Glide](http://bumptech.github.io/glide/) with RecyclerViewPreloader
+- [greenDAO](http://greenrobot.org/greendao/)
 - [Gson](https://github.com/google/gson) with custom TypeAdapter
 - [Parceler](http://parceler.org/)
 - [Retrofit](http://square.github.io/retrofit/)

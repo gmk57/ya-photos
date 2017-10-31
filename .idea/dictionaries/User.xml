@@ -4,6 +4,7 @@
       <w>eventbus</w>
       <w>fileprovider</w>
       <w>github</w>
+      <w>greendao</w>
       <w>greenrobot</w>
       <w>okhttp</w>
       <w>parceler</w>

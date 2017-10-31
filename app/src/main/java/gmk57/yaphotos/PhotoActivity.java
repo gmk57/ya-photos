@@ -61,8 +61,8 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
             mUiVisible = savedInstanceState.getBoolean(KEY_UI_VISIBLE, true);
         }
 
-        mAlbum = Repository.getInstance().getAlbum(mAlbumType);
         EventBus.getDefault().register(this);
+        mAlbum = Repository.getInstance(this).getAlbum(mAlbumType);
 
         setContentView(R.layout.viewpager);
         mViewPager = findViewById(R.id.pager);
@@ -74,7 +74,7 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
             @Override
             public void onPageSelected(int position) {
                 if (position + 10 > mAlbum.getSize()) {
-                    Repository.getInstance().fetchNextPage(mAlbumType);
+                    Repository.getInstance(PhotoActivity.this).fetchNextPage(mAlbumType);
                 }
             }
         });
@@ -101,7 +101,7 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onAlbumLoaded(AlbumLoadedEvent event) {
         if (event.getAlbumType() == mAlbumType) {
-            mAlbum = Repository.getInstance().getAlbum(mAlbumType);
+            mAlbum = Repository.getInstance(this).getAlbum(mAlbumType);
             mViewPager.getAdapter().notifyDataSetChanged();
         }
     }

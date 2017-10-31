@@ -58,7 +58,7 @@ public class AlbumFragment extends BaseFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAlbumType = getArguments().getInt(ARG_ALBUM_TYPE);
-        mRepository = Repository.getInstance();
+        mRepository = Repository.getInstance(getContext());
     }
 
     @NonNull
@@ -69,13 +69,13 @@ public class AlbumFragment extends BaseFragment {
         mRecyclerView = view.findViewById(R.id.album_recycler_view);
 
         // If possible, get album immediately to preserve scroll position
+        EventBus.getDefault().register(this);
         Album album = mRepository.getAlbum(mAlbumType);
         if (album.getSize() > 0) {
             setupProgressState(STATE_OK);
         } else {
             setupProgressState(STATE_LOADING);
         }
-        EventBus.getDefault().register(this);
 
         mPhotoAdapter = new PhotoAdapter(album);
         mRecyclerView.setAdapter(mPhotoAdapter);
