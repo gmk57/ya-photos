@@ -30,6 +30,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Multi-layer model repository (memory/database/network)
 - Persistence for better offline UX
 - Workaround to calculate next page for "Photos of the day" album
+- Instrumentation and unit tests
 
 ## Technologies used
 
@@ -45,6 +46,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Date, Calendar, SimpleDateFormat
 - FileProvider
 - Fragment, FragmentManager
+- JUnit, Espresso
 - RecyclerView, GridLayoutManager
 - StrictMode
 - SwipeRefreshLayout
