@@ -1,16 +1,19 @@
 package gmk57.yaphotos;
 
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.SystemClock;
 import android.support.design.widget.TabLayout;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.webkit.WebView;
+import android.widget.ImageView;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,6 +24,9 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
 import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.swipeDown;
+import static android.support.test.espresso.action.ViewActions.swipeUp;
+import static android.support.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition;
 import static android.support.test.espresso.contrib.RecyclerViewActions.scrollToPosition;
@@ -30,6 +36,8 @@ import static android.support.test.espresso.intent.Intents.intended;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasExtra;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayingAtLeast;
+import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
@@ -39,6 +47,8 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -129,17 +139,16 @@ public class AlbumActivityTest {
     }
 
     @Test
-    public void aboutMenuFiresProperIntent() throws Exception {
+    public void aboutMenu_FiresProperIntent() throws Exception {
         openActionBarOverflowOrOptionsMenu(getTargetContext());
         onView(allOf(withId(R.id.title), withText("About")))
                 .perform(click());
         intended(allOf(hasComponent(WebViewActivity.class.getName()),
-                hasExtra("gmk57.yaphotos.url", "file:///android_asset/about.htm")
-        ));
+                hasExtra("gmk57.yaphotos.url", "file:///android_asset/about.htm")));
     }
 
     @Test
-    public void aboutMenuDisplaysAboutPage() throws Exception {
+    public void aboutMenu_DisplaysAboutPage() throws Exception {
         openActionBarOverflowOrOptionsMenu(getTargetContext());
         onView(allOf(withId(R.id.title), withText("About")))
                 .perform(click());
@@ -150,8 +159,26 @@ public class AlbumActivityTest {
                                 ((WebView) view).getUrl()));
     }
 
+
+    /**
+     * Should be started from AlbumActivity to provide proper back stack
+     */
     @Test
-    public void clickOnThumbnailFiresProperIntent() throws Exception {
+    public void upButtonInWebViewActivity_ReturnsToAlbumActivity() throws Exception {
+        openActionBarOverflowOrOptionsMenu(getTargetContext());
+        onView(allOf(withId(R.id.title), withText("About"))).perform(click());
+
+        onView(withId(R.id.pager)).check(doesNotExist());
+
+        onView(withClassName(is(AppCompatImageButton.class.getName())))
+                .check(matches(anything()))
+                .perform(click());
+
+        onView(withId(R.id.pager)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void clickOnThumbnail_FiresProperIntent() throws Exception {
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(actionOnItemAtPosition(40, click()));
         intended(allOf(hasComponent(PhotoActivity.class.getName()),
@@ -160,7 +187,7 @@ public class AlbumActivityTest {
     }
 
     @Test
-    public void clickOnThumbnailDisplaysPhotoActivity() throws Exception {
+    public void clickOnThumbnail_DisplaysPhotoActivity() throws Exception {
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(actionOnItemAtPosition(40, click()));
         Photo photo = Repository.getInstance(getTargetContext())
@@ -174,10 +201,10 @@ public class AlbumActivityTest {
     }
 
     @Test
-    public void recreatedActivityKeepsPositions() throws Exception {
+    public void recreatedActivity_KeepsPositions() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
-                .perform(scrollToPosition(80));
+                .perform(scrollToPosition(50));
 
         getInstrumentation().runOnMainSync(() -> mTestRule.getActivity().recreate());
 
@@ -192,15 +219,11 @@ public class AlbumActivityTest {
     }
 
     @Test
-    public void rotatedActivityKeepsPositions() throws Exception {
+    public void rotatedActivity_KeepsPositions() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
-                .perform(scrollToPosition(80));
-
-        int currentOrientation = getTargetContext().getResources().getConfiguration().orientation;
-        int targetOrientation = (currentOrientation == Configuration.ORIENTATION_PORTRAIT) ?
-                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-        mTestRule.getActivity().setRequestedOrientation(targetOrientation);
+                .perform(scrollToPosition(50));
+        TestHelper.rotateScreen(mTestRule);
 
         onView(withId(R.id.pager)).check((view, noViewFoundException) ->
                 assertThat(((ViewPager) view).getCurrentItem(), is(2)));
@@ -210,5 +233,90 @@ public class AlbumActivityTest {
                     GridLayoutManager mgr = (GridLayoutManager) recyclerView.getLayoutManager();
                     assertThat(mgr.findFirstVisibleItemPosition(), greaterThan(0));
                 });
+    }
+
+    @Test
+    public void rotatedActivity_ChangesSpanCount() throws Exception {
+        RecyclerView recyclerView = mTestRule.getActivity().findViewById(R.id.album_recycler_view);
+        int oldSpanCount = ((GridLayoutManager) recyclerView.getLayoutManager()).getSpanCount();
+        TestHelper.rotateScreen(mTestRule);
+
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .check((view, noViewFoundException) -> {
+                    RecyclerView newRecyclerView = (RecyclerView) view;
+                    GridLayoutManager mgr = (GridLayoutManager) newRecyclerView.getLayoutManager();
+                    assertThat(mgr.getSpanCount(), is(not(oldSpanCount)));
+                });
+    }
+
+    @Test
+    public void scrollDown_HidesAppBar() throws Exception {
+        onView(withId(R.id.toolbar)).check(matches(isDisplayed()));
+        onView(withId(R.id.tabs)).check(matches(isDisplayed()));
+
+        onView(withId(R.id.coordinator)).perform(swipeUp());
+
+        onView(withId(R.id.toolbar)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.tabs)).check(matches(not(isDisplayed())));
+    }
+
+    @Test
+    public void scrollBack_ShowsTabsThenToolbar() throws Exception {
+        onView(withId(R.id.coordinator)).perform(swipeUp(), swipeUp(), swipeUp(), swipeDown());
+        onView(withId(R.id.toolbar)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.tabs)).check(matches(isDisplayed()));
+
+        onView(withId(R.id.coordinator)).perform(swipeDown(), swipeDown(), swipeDown());
+        onView(withId(R.id.toolbar)).check(matches(isDisplayed()));
+        onView(withId(R.id.tabs)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void scrollToEnd_FetchesNextPage() throws Exception {
+        onView(withId(R.id.pager)).perform(scrollToLast());
+        int albumSize = Repository.getInstance(getInstrumentation().getTargetContext())
+                .getAlbum(2).getSize();
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .perform(scrollToPosition(albumSize - 1));
+        SystemClock.sleep(3000);
+
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .check((view, noViewFoundException) -> assertThat(
+                        ((RecyclerView) view).getAdapter().getItemCount(),
+                        greaterThan(albumSize)));
+    }
+
+    @Test
+    public void pullToRefresh_ResetsAlbum() throws Exception {
+        onView(withId(R.id.pager)).perform(scrollToLast());
+        int oldSize = Repository.getInstance(getInstrumentation().getTargetContext())
+                .getAlbum(2).getSize();
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .perform(scrollToPosition(oldSize - 1));
+        SystemClock.sleep(3000);
+
+        int newSize = Repository.getInstance(getInstrumentation().getTargetContext())
+                .getAlbum(2).getSize();
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .perform(scrollToPosition(0))
+                .perform(TestHelper.withCustomConstraints(swipeDown(), isDisplayingAtLeast(50)));
+        SystemClock.sleep(3000);
+
+        onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .check((view, noViewFoundException) -> assertThat(
+                        ((RecyclerView) view).getAdapter().getItemCount(),
+                        lessThan(newSize)));
+    }
+
+    @Test
+    public void thumbnailsAreLoaded() throws Exception {
+        SystemClock.sleep(1000);
+        RecyclerView recyclerView = mTestRule.getActivity().findViewById(R.id.album_recycler_view);
+        ImageView view0 = recyclerView.getChildAt(0).findViewById(R.id.thumbnail_image_view);
+        ImageView view6 = recyclerView.getChildAt(6).findViewById(R.id.thumbnail_image_view);
+        Bitmap bitmap0 = ((BitmapDrawable) view0.getDrawable()).getBitmap();
+        Bitmap bitmap6 = ((BitmapDrawable) view6.getDrawable()).getBitmap();
+
+        assertThat(bitmap0, is(not(bitmap6)));
     }
 }
