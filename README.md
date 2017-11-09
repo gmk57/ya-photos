@@ -46,7 +46,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - Date, Calendar, SimpleDateFormat
 - FileProvider
 - Fragment, FragmentManager
-- JUnit, Espresso
+- JUnit, Espresso, UI Automator
 - RecyclerView, GridLayoutManager
 - StrictMode
 - SwipeRefreshLayout

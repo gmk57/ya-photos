@@ -3,6 +3,12 @@ package gmk57.yaphotos;
 import android.content.Intent;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.SdkSuppress;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.Until;
 import android.support.v7.widget.Toolbar;
 import android.webkit.WebView;
 
@@ -19,18 +25,16 @@ import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasData;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anything;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class WebViewActivityTest {
     @Rule
@@ -54,19 +58,44 @@ public class WebViewActivityTest {
     }
 
     @Test
-    @Ignore("fails on main test device")  // TODO: Replace with UI Automator?
+    @Ignore("fails on main test device")
     public void webView_HasLinkToGithub() throws Exception {
         WebView webView = mTestRule.getActivity().findViewById(R.id.web_view);
         getInstrumentation().runOnMainSync(() -> webView.getSettings().setJavaScriptEnabled(true));
         intending(hasAction(Intent.ACTION_VIEW)).respondWith(TestHelper.mStubResult);
 
-        onWebView().withElement(findElement(Locator.XPATH,
-                "//a[text()='View source code on GitHub.']"))
-                .check(webMatches(getText(), containsString("code")))
+        onWebView().withElement(findElement(Locator.XPATH, "//a[contains(text(), 'GitHub')]"))
                 .perform(webClick());
 
         intended(allOf(hasAction(Intent.ACTION_VIEW),
                 hasData("https://github.com/gmk57/ya-photos")));
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = 18)
+    public void webView_HasLinkToGithub2() throws Exception {
+        UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
+        UiObject linkToGithub = uiDevice.findObject(new UiSelector()
+                .descriptionContains("GitHub").clickable(true));
+        intending(hasAction(Intent.ACTION_VIEW)).respondWith(TestHelper.mStubResult);
+        linkToGithub.click();
+
+        intended(allOf(hasAction(Intent.ACTION_VIEW),
+                hasData("https://github.com/gmk57/ya-photos")));
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = 18)
+    public void webViewLink_OpensGithub() throws Exception {
+        UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
+        UiObject linkToGithub = uiDevice.findObject(new UiSelector()
+                .descriptionContains("GitHub").clickable(true));
+        linkToGithub.click();
+
+        boolean webpageOpened = uiDevice.wait(Until.hasObject(By
+                .descContains("GitHub - gmk57/ya-photos")), 5000);
+        uiDevice.pressBack();  // In any case we should try to close the browser
+        assertTrue("GitHub page is not opened", webpageOpened);
     }
 
     private static class WebViewActivityTestRule extends IntentsTestRule<WebViewActivity> {
