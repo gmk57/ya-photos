@@ -40,6 +40,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - [Gson](https://github.com/google/gson) with custom TypeAdapter
 - [Parceler](http://parceler.org/)
 - [Retrofit](http://square.github.io/retrofit/)
+- [Robolectric](http://robolectric.org/)
 - AsyncTask
 - AtomicBoolean, AtomicReferenceArray
 - CoordinatorLayout, AppBarLayout, Toolbar, TabLayout
