@@ -27,6 +27,10 @@ public class AlbumJsonAdapter extends TypeAdapter<Album> {
         mScreenSize = Math.max(displayMetrics.widthPixels, displayMetrics.heightPixels);
     }
 
+    public AlbumJsonAdapter(int screenSize) {
+        mScreenSize = screenSize;
+    }
+
     @Override
     public void write(JsonWriter out, Album value) throws IOException {/* Not needed */}
 
