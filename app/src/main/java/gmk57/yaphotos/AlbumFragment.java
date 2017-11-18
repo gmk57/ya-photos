@@ -28,6 +28,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import gmk57.yaphotos.Repository.AlbumType;
 
 /**
@@ -38,11 +40,12 @@ public class AlbumFragment extends BaseFragment {
     private static final String TAG = "AlbumFragment";
     private static final String ARG_ALBUM_TYPE = "albumType";
 
+    @Inject
+    Repository mRepository;
     private int mAlbumType;
     private GridLayoutManager mLayoutManager;
     private PhotoAdapter mPhotoAdapter;
     private RecyclerView mRecyclerView;
-    private Repository mRepository;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
     public static AlbumFragment newInstance(@AlbumType int albumType) {
@@ -58,7 +61,7 @@ public class AlbumFragment extends BaseFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAlbumType = getArguments().getInt(ARG_ALBUM_TYPE);
-        mRepository = Repository.getInstance(getContext());
+        App.getComponent().inject(this);
     }
 
     @NonNull

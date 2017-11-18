@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.SystemClock;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.widget.ImageView;
@@ -12,8 +13,8 @@ import android.widget.ImageView;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -41,15 +42,18 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
+@RunWith(AndroidJUnit4.class)
 public class PhotoActivityTest {
     @Rule
     public IntentsTestRule<PhotoActivity> mTestRule = new PhotoActivityTestRule();
+
     private Photo mPhoto;
+    private Repository mRepository;
 
     @Before
     public void setUp() throws Exception {
-        mPhoto = Repository.getInstance(getTargetContext())
-                .getAlbum(2).getPhoto(0);
+        mRepository = mTestRule.getActivity().mRepository;
+        mPhoto = mRepository.getAlbum(2).getPhoto(0);
     }
 
     @Test
@@ -139,13 +143,16 @@ public class PhotoActivityTest {
 
     @Test
     public void swipe_isEndless() throws Exception {
-        int albumSize = Repository.getInstance(getInstrumentation().getTargetContext())
-                .getAlbum(2).getSize();
-        onView(withId(R.id.pager)).perform(scrollToLast());
+        int albumSize = mRepository.getAlbum(2).getSize();
+
+        onView(withId(R.id.pager))
+                .check((view, noViewFoundException) ->
+                        assertThat(((ViewPager) view).getAdapter().getCount(), is(albumSize)))
+                .perform(scrollToLast());
         SystemClock.sleep(3000);
 
         onView(withId(R.id.pager)).check((view, noViewFoundException) ->
-                assertThat(((ViewPager) view).getAdapter().getCount(), greaterThan(albumSize)));
+                assertThat(((ViewPager) view).getAdapter().getCount(), is(greaterThan(albumSize))));
     }
 
     private static class PhotoActivityTestRule extends IntentsTestRule<PhotoActivity> {

@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import gmk57.yaphotos.DaoMaster.DevOpenHelper;
 import gmk57.yaphotos.DaoMaster.OpenHelper;
 import retrofit2.Call;
@@ -30,15 +33,16 @@ import retrofit2.http.Path;
 /**
  * Singleton class, responsible for holding model objects and retrieving them from database/network
  */
+@Singleton
 public class Repository {
     public static final String[] ALBUM_PATHS = {"recent", "top", "podhistory"};
     private static final String TAG = "Repository";
-    private static Repository sInstance;
     private final AtomicReferenceArray<Album> mAlbums;
     private final AtomicBoolean[] mFetchRunning;
     private final Context mContext;
 
-    private Repository(Context context) {
+    @Inject
+    Repository(Context context) {
         int length = ALBUM_PATHS.length;
         mAlbums = new AtomicReferenceArray<>(length);
         mFetchRunning = new AtomicBoolean[length];
@@ -47,19 +51,6 @@ public class Repository {
             mFetchRunning[i] = new AtomicBoolean();
         }
         mContext = context;
-    }
-
-    /**
-     * Provides single instance of this class. Is NOT currently thread-safe.
-     *
-     * @param context Required for database operations. Any context passed will be converted to
-     *                application context to prevent memory leaks
-     * @return Single instance of this class.
-     */
-    public static Repository getInstance(Context context) {
-        if (sInstance == null)
-            sInstance = new Repository(context.getApplicationContext());
-        return sInstance;
     }
 
     /**

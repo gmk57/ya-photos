@@ -34,6 +34,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 
 ## Technologies used
 
+- [Dagger](https://google.github.io/dagger/)
 - [EventBus](http://greenrobot.org/eventbus/)
 - [Glide](http://bumptech.github.io/glide/) with RecyclerViewPreloader
 - [greenDAO](http://greenrobot.org/greendao/)

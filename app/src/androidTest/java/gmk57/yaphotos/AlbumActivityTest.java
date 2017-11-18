@@ -6,6 +6,8 @@ import android.os.SystemClock;
 import android.support.design.widget.TabLayout;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.GridLayoutManager;
@@ -15,6 +17,7 @@ import android.view.Menu;
 import android.webkit.WebView;
 import android.widget.ImageView;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +36,8 @@ import static android.support.test.espresso.contrib.RecyclerViewActions.scrollTo
 import static android.support.test.espresso.contrib.ViewPagerActions.scrollRight;
 import static android.support.test.espresso.contrib.ViewPagerActions.scrollToLast;
 import static android.support.test.espresso.intent.Intents.intended;
+import static android.support.test.espresso.intent.Intents.intending;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.anyIntent;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasExtra;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -57,6 +62,18 @@ import static org.junit.Assert.assertTrue;
 public class AlbumActivityTest {
     @Rule
     public IntentsTestRule<AlbumActivity> mTestRule = new IntentsTestRule<>(AlbumActivity.class);
+
+    private Repository mRepository;
+
+    @Before
+    public void setUp() throws Exception {
+        // Couldn't find any other way to retrieve the same instance of Repository that is injected
+        // by Dagger into AlbumFragments. Subclassed Dagger component in test package gives another
+        // instance.
+        FragmentManager manager = mTestRule.getActivity().getSupportFragmentManager();
+        Fragment fragment = manager.findFragmentByTag("android:switcher:" + R.id.pager + ":0");
+        mRepository = ((AlbumFragment) fragment).mRepository;
+    }
 
     @Test
     public void toolbarDisplaysAppName() throws Exception {
@@ -129,20 +146,23 @@ public class AlbumActivityTest {
     }
 
     @Test
-    public void lastAlbumSizeIsMinimum100() throws Exception {
+    public void lastAlbumSizeIsMinimum90() throws Exception {
         onView(withId(R.id.pager))
                 .perform(scrollToLast());
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .check((view, noViewFoundException) ->
                         assertThat(((RecyclerView) view).getAdapter().getItemCount(),
-                                greaterThanOrEqualTo(100)));
+                                greaterThanOrEqualTo(90)));
     }
 
     @Test
     public void aboutMenu_FiresProperIntent() throws Exception {
         openActionBarOverflowOrOptionsMenu(getTargetContext());
+        intending(anyIntent()).respondWith(TestHelper.mStubResult);
+
         onView(allOf(withId(R.id.title), withText("About")))
                 .perform(click());
+
         intended(allOf(hasComponent(WebViewActivity.class.getName()),
                 hasExtra("gmk57.yaphotos.url", "file:///android_asset/about.htm")));
     }
@@ -190,8 +210,8 @@ public class AlbumActivityTest {
     public void clickOnThumbnail_DisplaysPhotoActivity() throws Exception {
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(actionOnItemAtPosition(40, click()));
-        Photo photo = Repository.getInstance(getTargetContext())
-                .getAlbum(0).getPhoto(40);
+        Photo photo = mRepository.getAlbum(0).getPhoto(40);
+
         onView(withId(R.id.action_bar)).check(matches(anything()));
         onView(withId(R.id.action_bar)).check((view, noViewFoundException) -> {
             String subtitle = ((Toolbar) view).getSubtitle().toString();
@@ -274,29 +294,30 @@ public class AlbumActivityTest {
     @Test
     public void scrollToEnd_FetchesNextPage() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
-        int albumSize = Repository.getInstance(getInstrumentation().getTargetContext())
-                .getAlbum(2).getSize();
+        int albumSize = mRepository.getAlbum(2).getSize();
+
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
+                .check((view, noViewFoundException) -> assertThat(
+                        ((RecyclerView) view).getAdapter().getItemCount(), is(albumSize)))
                 .perform(scrollToPosition(albumSize - 1));
         SystemClock.sleep(3000);
 
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .check((view, noViewFoundException) -> assertThat(
-                        ((RecyclerView) view).getAdapter().getItemCount(),
-                        greaterThan(albumSize)));
+                        ((RecyclerView) view).getAdapter().getItemCount(), greaterThan(albumSize)));
     }
 
     @Test
     public void pullToRefresh_ResetsAlbum() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
-        int oldSize = Repository.getInstance(getInstrumentation().getTargetContext())
-                .getAlbum(2).getSize();
+        int oldSize = mRepository.getAlbum(2).getSize();
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(scrollToPosition(oldSize - 1));
         SystemClock.sleep(3000);
 
-        int newSize = Repository.getInstance(getInstrumentation().getTargetContext())
-                .getAlbum(2).getSize();
+        int newSize = mRepository.getAlbum(2).getSize();
+        assertThat(newSize, is(greaterThan(oldSize)));
+
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(scrollToPosition(0))
                 .perform(TestHelper.withCustomConstraints(swipeDown(), isDisplayingAtLeast(50)));
@@ -304,8 +325,7 @@ public class AlbumActivityTest {
 
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .check((view, noViewFoundException) -> assertThat(
-                        ((RecyclerView) view).getAdapter().getItemCount(),
-                        lessThan(newSize)));
+                        ((RecyclerView) view).getAdapter().getItemCount(), lessThan(newSize)));
     }
 
     @Test
