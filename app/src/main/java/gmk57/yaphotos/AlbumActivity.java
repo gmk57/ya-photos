@@ -13,6 +13,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import gmk57.yaphotos.data.source.AlbumRepository;
+
 /**
  * Main app screen with ViewPager of AlbumFragments.
  */
@@ -67,7 +69,7 @@ public class AlbumActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return Repository.ALBUM_PATHS.length;
+            return AlbumRepository.ALBUM_PATHS.length;
         }
 
         @Override

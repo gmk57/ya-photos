@@ -22,6 +22,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import gmk57.yaphotos.data.Photo;
+import gmk57.yaphotos.data.source.AlbumRepository;
+
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.support.test.espresso.Espresso.onView;
@@ -63,16 +66,16 @@ public class AlbumActivityTest {
     @Rule
     public IntentsTestRule<AlbumActivity> mTestRule = new IntentsTestRule<>(AlbumActivity.class);
 
-    private Repository mRepository;
+    private AlbumRepository mAlbumRepository;
 
     @Before
     public void setUp() throws Exception {
-        // Couldn't find any other way to retrieve the same instance of Repository that is injected
+        // Couldn't find any other way to retrieve the same instance of AlbumRepository that is injected
         // by Dagger into AlbumFragments. Subclassed Dagger component in test package gives another
         // instance.
         FragmentManager manager = mTestRule.getActivity().getSupportFragmentManager();
         Fragment fragment = manager.findFragmentByTag("android:switcher:" + R.id.pager + ":0");
-        mRepository = ((AlbumFragment) fragment).mRepository;
+        mAlbumRepository = ((AlbumFragment) fragment).mAlbumRepository;
     }
 
     @Test
@@ -210,7 +213,7 @@ public class AlbumActivityTest {
     public void clickOnThumbnail_DisplaysPhotoActivity() throws Exception {
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(actionOnItemAtPosition(40, click()));
-        Photo photo = mRepository.getAlbum(0).getPhoto(40);
+        Photo photo = mAlbumRepository.getAlbum(0).getPhoto(40);
 
         onView(withId(R.id.action_bar)).check(matches(anything()));
         onView(withId(R.id.action_bar)).check((view, noViewFoundException) -> {
@@ -294,7 +297,7 @@ public class AlbumActivityTest {
     @Test
     public void scrollToEnd_FetchesNextPage() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
-        int albumSize = mRepository.getAlbum(2).getSize();
+        int albumSize = mAlbumRepository.getAlbum(2).getSize();
 
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .check((view, noViewFoundException) -> assertThat(
@@ -310,12 +313,12 @@ public class AlbumActivityTest {
     @Test
     public void pullToRefresh_ResetsAlbum() throws Exception {
         onView(withId(R.id.pager)).perform(scrollToLast());
-        int oldSize = mRepository.getAlbum(2).getSize();
+        int oldSize = mAlbumRepository.getAlbum(2).getSize();
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))
                 .perform(scrollToPosition(oldSize - 1));
         SystemClock.sleep(3000);
 
-        int newSize = mRepository.getAlbum(2).getSize();
+        int newSize = mAlbumRepository.getAlbum(2).getSize();
         assertThat(newSize, is(greaterThan(oldSize)));
 
         onView(allOf(withId(R.id.album_recycler_view), isDisplayed()))

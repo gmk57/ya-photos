@@ -15,6 +15,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import gmk57.yaphotos.data.Photo;
+import gmk57.yaphotos.data.source.AlbumRepository;
+
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -48,12 +51,12 @@ public class PhotoActivityTest {
     public IntentsTestRule<PhotoActivity> mTestRule = new PhotoActivityTestRule();
 
     private Photo mPhoto;
-    private Repository mRepository;
+    private AlbumRepository mAlbumRepository;
 
     @Before
     public void setUp() throws Exception {
-        mRepository = mTestRule.getActivity().mRepository;
-        mPhoto = mRepository.getAlbum(2).getPhoto(0);
+        mAlbumRepository = mTestRule.getActivity().mAlbumRepository;
+        mPhoto = mAlbumRepository.getAlbum(2).getPhoto(0);
     }
 
     @Test
@@ -143,7 +146,7 @@ public class PhotoActivityTest {
 
     @Test
     public void swipe_isEndless() throws Exception {
-        int albumSize = mRepository.getAlbum(2).getSize();
+        int albumSize = mAlbumRepository.getAlbum(2).getSize();
 
         onView(withId(R.id.pager))
                 .check((view, noViewFoundException) ->

@@ -1,4 +1,4 @@
-package gmk57.yaphotos;
+package gmk57.yaphotos.data;
 
 import com.google.gson.annotations.JsonAdapter;
 
@@ -11,6 +11,8 @@ import org.greenrobot.greendao.annotation.ToMany;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import gmk57.yaphotos.data.source.AlbumJsonAdapter;
 
 @Entity
 @JsonAdapter(AlbumJsonAdapter.class)

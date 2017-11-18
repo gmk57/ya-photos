@@ -1,4 +1,4 @@
-package gmk57.yaphotos;
+package gmk57.yaphotos.data.source;
 
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.Photo;
 
 public class AlbumJsonAdapter extends TypeAdapter<Album> {
     private static final String TAG = "AlbumJsonAdapter";

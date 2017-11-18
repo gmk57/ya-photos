@@ -1,4 +1,4 @@
-package gmk57.yaphotos;
+package gmk57.yaphotos.data;
 
 import android.net.Uri;
 

@@ -18,7 +18,9 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import javax.inject.Inject;
 
-import gmk57.yaphotos.Repository.AlbumType;
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.AlbumType;
+import gmk57.yaphotos.data.source.AlbumRepository;
 
 /**
  * Detail screen with ViewPager of PhotoFragments. Should be started with intent constructed through
@@ -31,7 +33,9 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
     private static final String KEY_UI_VISIBLE = "uiVisible";
 
     @Inject
-    Repository mRepository;
+    AlbumRepository mAlbumRepository;
+    @Inject
+    EventBus mEventBus;
     private boolean mUiVisible = true;
     private int mAlbumType;
     private Album mAlbum;
@@ -66,8 +70,8 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
             mUiVisible = savedInstanceState.getBoolean(KEY_UI_VISIBLE, true);
         }
 
-        EventBus.getDefault().register(this);
-        mAlbum = mRepository.getAlbum(mAlbumType);
+        mEventBus.register(this);
+        mAlbum = mAlbumRepository.getAlbum(mAlbumType);
 
         setContentView(R.layout.viewpager);
         mViewPager = findViewById(R.id.pager);
@@ -79,7 +83,7 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
             @Override
             public void onPageSelected(int position) {
                 if (position + 10 > mAlbum.getSize()) {
-                    mRepository.fetchNextPage(mAlbumType);
+                    mAlbumRepository.fetchNextPage(mAlbumType);
                 }
             }
         });
@@ -99,14 +103,14 @@ public class PhotoActivity extends AppCompatActivity implements PhotoFragment.Ca
 
     @Override
     protected void onDestroy() {
-        EventBus.getDefault().unregister(this);
+        mEventBus.unregister(this);
         super.onDestroy();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onAlbumLoaded(AlbumLoadedEvent event) {
         if (event.getAlbumType() == mAlbumType) {
-            mAlbum = mRepository.getAlbum(mAlbumType);
+            mAlbum = mAlbumRepository.getAlbum(mAlbumType);
             mViewPager.getAdapter().notifyDataSetChanged();
         }
     }

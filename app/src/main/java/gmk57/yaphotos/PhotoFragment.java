@@ -36,6 +36,8 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import gmk57.yaphotos.data.Photo;
+
 /**
  * Fragment to display a full-screen photo. Should be constructed through <code>newInstance</code>
  * factory method.

@@ -2,6 +2,9 @@ package gmk57.yaphotos;
 
 import org.junit.Test;
 
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.Photo;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

@@ -1,19 +1,13 @@
-package gmk57.yaphotos;
+package gmk57.yaphotos.data.source;
 
-import android.content.Context;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.greendao.database.Database;
 
 import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -21,28 +15,31 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import gmk57.yaphotos.DaoMaster.DevOpenHelper;
-import gmk57.yaphotos.DaoMaster.OpenHelper;
-import retrofit2.Call;
+import dagger.Lazy;
+import gmk57.yaphotos.AlbumLoadedEvent;
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.AlbumDao;
+import gmk57.yaphotos.data.AlbumType;
+import gmk57.yaphotos.data.DaoSession;
+import gmk57.yaphotos.data.Photo;
+import gmk57.yaphotos.data.PhotoDao;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.GET;
-import retrofit2.http.Path;
 
 /**
  * Singleton class, responsible for holding model objects and retrieving them from database/network
  */
 @Singleton
-public class Repository {
+public class AlbumRepository {
     public static final String[] ALBUM_PATHS = {"recent", "top", "podhistory"};
-    private static final String TAG = "Repository";
+    private static final String TAG = "AlbumRepository";
     private final AtomicReferenceArray<Album> mAlbums;
     private final AtomicBoolean[] mFetchRunning;
-    private final Context mContext;
+    private final NetworkSource mNetworkSource;
+    private final Lazy<DaoSession> mLocalSource;
+    private final EventBus mEventBus;
 
     @Inject
-    Repository(Context context) {
+    AlbumRepository(Lazy<DaoSession> localSource, NetworkSource networkSource, EventBus eventBus) {
         int length = ALBUM_PATHS.length;
         mAlbums = new AtomicReferenceArray<>(length);
         mFetchRunning = new AtomicBoolean[length];
@@ -50,7 +47,9 @@ public class Repository {
             mAlbums.set(i, new Album());
             mFetchRunning[i] = new AtomicBoolean();
         }
-        mContext = context;
+        mLocalSource = localSource;
+        mNetworkSource = networkSource;
+        mEventBus = eventBus;
     }
 
     /**
@@ -96,68 +95,6 @@ public class Repository {
         if (mAlbums.get(albumType).getNextOffset() != null
                 && mFetchRunning[albumType].compareAndSet(false, true)) {
             new FetchAlbumThread(albumType, mAlbums.get(albumType), false).start();
-        }
-    }
-
-    /**
-     * Provides single instance of NetworkLayer, initialized on first invocation.
-     *
-     * @return Instance of NetworkLayer
-     */
-    @WorkerThread
-    private NetworkLayer getNetworkLayer() {
-        return NetworkHolder.NETWORK_LAYER;
-    }
-
-    /**
-     * Value constraint annotation to make sure only valid album types are used.
-     * Valid values = valid ALBUM_PATHS indexes
-     */
-    @Retention(RetentionPolicy.SOURCE)
-    @IntRange(from = 0, to = 2)  // Must match ALBUM_PATHS.length - 1
-    public @interface AlbumType {
-    }
-
-    /**
-     * Retrofit interface for accessing server API.
-     */
-    interface NetworkLayer {
-        @GET("{albumPath}/{offset}?format=json")
-        Call<Album> downloadAlbum(@Path("albumPath") String albumPath,
-                                  @Path("offset") String offset);
-    }
-
-    /**
-     * Provides lazy and thread-safe initialization of NetworkLayer single instance,
-     * like in initialization-on-demand holder singleton idiom.
-     */
-    private static class NetworkHolder {
-        static final NetworkLayer NETWORK_LAYER = new Retrofit.Builder()
-                .baseUrl("http://api-fotki.yandex.ru/api/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(NetworkLayer.class);
-    }
-
-    /**
-     * Provides single instance of database layer (with lazy and thread-safe initialization).
-     * Single instance is required for reliable multi-thread access to database.
-     * <p>
-     * Using application-scope DaoSession is
-     * <a href="http://greenrobot.org/greendao/documentation/how-to-get-started/#comment-45">
-     * recommended by author of greenDAO.</a>
-     */
-    private static class DatabaseHolder {
-        static DaoSession sDaoSession;
-
-        @WorkerThread
-        static synchronized DaoSession getDaoSession(Context context) {
-            if (sDaoSession == null) {
-                OpenHelper openHelper = new DevOpenHelper(context, "albums-db");
-                Database database = openHelper.getWritableDb();
-                sDaoSession = new DaoMaster(database).newSession();
-            }
-            return sDaoSession;
         }
     }
 
@@ -219,7 +156,7 @@ public class Repository {
             }
 
             // In any case we should notify subscribers that load is finished
-            EventBus.getDefault().post(new AlbumLoadedEvent(mAlbumType));
+            mEventBus.post(new AlbumLoadedEvent(mAlbumType));
             mFetchRunning[mAlbumType].set(false);
 
             if (newPhotos != null) {  // We have something new to save in DB
@@ -229,7 +166,7 @@ public class Repository {
 
         @Nullable
         private Album fetchAlbumFromDb() {
-            AlbumDao albumDao = DatabaseHolder.getDaoSession(mContext).getAlbumDao();
+            AlbumDao albumDao = mLocalSource.get().getAlbumDao();
             Album album = albumDao.load((long) mAlbumType);
             if (album != null) {
                 album.getPhotos();  // Otherwise photos are loaded lazily (== in UI thread)
@@ -241,11 +178,10 @@ public class Repository {
         private Album fetchAlbumFromNetwork() {
             String albumPath = ALBUM_PATHS[mAlbumType];
             String offset = (mOldAlbum == null) ? "" : mOldAlbum.getNextOffset();
-            NetworkLayer networkLayer = getNetworkLayer();
 
             Album album = null;
             try {
-                Response<Album> response = networkLayer.downloadAlbum(albumPath, offset).execute();
+                Response<Album> response = mNetworkSource.downloadAlbum(albumPath, offset).execute();
 
                 if (response.isSuccessful()) {
                     album = response.body();
@@ -267,9 +203,8 @@ public class Repository {
                 photo.setAlbumType((long) mAlbumType);
             }
 
-            DaoSession daoSession = DatabaseHolder.getDaoSession(mContext);
-            AlbumDao albumDao = daoSession.getAlbumDao();
-            PhotoDao photoDao = daoSession.getPhotoDao();
+            AlbumDao albumDao = mLocalSource.get().getAlbumDao();
+            PhotoDao photoDao = mLocalSource.get().getPhotoDao();
 
             if (mOldAlbum == null && mForceNetwork) { // Forced reload, clean up DB before inserting
                 List<Photo> oldPhotos = photoDao.queryBuilder()

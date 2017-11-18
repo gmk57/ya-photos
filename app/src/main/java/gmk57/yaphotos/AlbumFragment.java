@@ -30,7 +30,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import gmk57.yaphotos.Repository.AlbumType;
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.AlbumType;
+import gmk57.yaphotos.data.Photo;
+import gmk57.yaphotos.data.source.AlbumRepository;
 
 /**
  * Main app fragment to display album thumbnails, with scrolling (endless, if possible). Should be
@@ -41,7 +44,9 @@ public class AlbumFragment extends BaseFragment {
     private static final String ARG_ALBUM_TYPE = "albumType";
 
     @Inject
-    Repository mRepository;
+    AlbumRepository mAlbumRepository;
+    @Inject
+    EventBus mEventBus;
     private int mAlbumType;
     private GridLayoutManager mLayoutManager;
     private PhotoAdapter mPhotoAdapter;
@@ -72,8 +77,8 @@ public class AlbumFragment extends BaseFragment {
         mRecyclerView = view.findViewById(R.id.album_recycler_view);
 
         // If possible, get album immediately to preserve scroll position
-        EventBus.getDefault().register(this);
-        Album album = mRepository.getAlbum(mAlbumType);
+        mEventBus.register(this);
+        Album album = mAlbumRepository.getAlbum(mAlbumType);
         if (album.getSize() > 0) {
             setupProgressState(STATE_OK);
         } else {
@@ -101,7 +106,7 @@ public class AlbumFragment extends BaseFragment {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (mLayoutManager.findLastVisibleItemPosition() + 40 > mLayoutManager.getItemCount()) {
-                    mRepository.fetchNextPage(mAlbumType);
+                    mAlbumRepository.fetchNextPage(mAlbumType);
                 }
 
             }
@@ -114,19 +119,19 @@ public class AlbumFragment extends BaseFragment {
         mRecyclerView.addOnScrollListener(preloader);
 
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
-        mSwipeRefreshLayout.setOnRefreshListener(() -> mRepository.reloadAlbum(mAlbumType));
+        mSwipeRefreshLayout.setOnRefreshListener(() -> mAlbumRepository.reloadAlbum(mAlbumType));
 
         return view;
     }
 
     @Override
     protected void tryAgain() {
-        mRepository.reloadAlbum(mAlbumType);
+        mAlbumRepository.reloadAlbum(mAlbumType);
     }
 
     @Override
     public void onDestroyView() {
-        EventBus.getDefault().unregister(this);
+        mEventBus.unregister(this);
         super.onDestroyView();
     }
 
@@ -156,7 +161,7 @@ public class AlbumFragment extends BaseFragment {
     public void onAlbumLoaded(AlbumLoadedEvent event) {
         if (event.getAlbumType() == mAlbumType) {
             mSwipeRefreshLayout.setRefreshing(false);
-            Album album = mRepository.getAlbum(mAlbumType);
+            Album album = mAlbumRepository.getAlbum(mAlbumType);
 
             if (album.getSize() > 0) {
                 mPhotoAdapter.setAlbum(album);

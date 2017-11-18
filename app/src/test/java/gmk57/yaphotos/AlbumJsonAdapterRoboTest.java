@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import gmk57.yaphotos.data.Album;
+import gmk57.yaphotos.data.Photo;
+import gmk57.yaphotos.data.source.AlbumJsonAdapter;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
