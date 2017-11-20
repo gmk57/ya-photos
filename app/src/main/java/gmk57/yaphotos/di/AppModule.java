@@ -11,7 +11,7 @@ import dagger.Module;
 import dagger.Provides;
 import gmk57.yaphotos.data.DaoMaster;
 import gmk57.yaphotos.data.DaoSession;
-import gmk57.yaphotos.data.source.NetworkSource;
+import gmk57.yaphotos.data.source.NetworkApi;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -51,11 +51,11 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public NetworkSource provideNetworkSource() {
+    public NetworkApi provideNetworkApi() {
         return new Retrofit.Builder()
                 .baseUrl("http://api-fotki.yandex.ru/api/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
-                .create(NetworkSource.class);
+                .create(NetworkApi.class);
     }
 }

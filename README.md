@@ -39,6 +39,7 @@ This is a version of [YaPhotosNoLib](https://github.com/gmk57/ya-photos-no-lib) 
 - [Glide](http://bumptech.github.io/glide/) with RecyclerViewPreloader
 - [greenDAO](http://greenrobot.org/greendao/)
 - [Gson](https://github.com/google/gson) with custom TypeAdapter
+- [Mockito](http://mockito.org/)
 - [Parceler](http://parceler.org/)
 - [Retrofit](http://square.github.io/retrofit/)
 - [Robolectric](http://robolectric.org/)

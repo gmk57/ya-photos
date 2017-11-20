@@ -3,11 +3,9 @@ package gmk57.yaphotos.data.source;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -15,15 +13,10 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import dagger.Lazy;
 import gmk57.yaphotos.AlbumLoadedEvent;
 import gmk57.yaphotos.data.Album;
-import gmk57.yaphotos.data.AlbumDao;
 import gmk57.yaphotos.data.AlbumType;
-import gmk57.yaphotos.data.DaoSession;
 import gmk57.yaphotos.data.Photo;
-import gmk57.yaphotos.data.PhotoDao;
-import retrofit2.Response;
 
 /**
  * Singleton class, responsible for holding model objects and retrieving them from database/network
@@ -34,12 +27,12 @@ public class AlbumRepository {
     private static final String TAG = "AlbumRepository";
     private final AtomicReferenceArray<Album> mAlbums;
     private final AtomicBoolean[] mFetchRunning;
+    private final LocalSource mLocalSource;
     private final NetworkSource mNetworkSource;
-    private final Lazy<DaoSession> mLocalSource;
     private final EventBus mEventBus;
 
     @Inject
-    AlbumRepository(Lazy<DaoSession> localSource, NetworkSource networkSource, EventBus eventBus) {
+    AlbumRepository(LocalSource localSource, NetworkSource networkSource, EventBus eventBus) {
         int length = ALBUM_PATHS.length;
         mAlbums = new AtomicReferenceArray<>(length);
         mFetchRunning = new AtomicBoolean[length];
@@ -137,12 +130,14 @@ public class AlbumRepository {
         public void run() {
             Album album = null;
             if (mOldAlbum == null && !mForceNetwork) {  // Cold start, try fetching DB first
-                album = fetchAlbumFromDb();
+                album = mLocalSource.fetchAlbum(mAlbumType);
             }
 
             List<Photo> newPhotos = null;
             if (album == null) { // Fetching next page or mForceNetwork or DB empty => go to network
-                album = fetchAlbumFromNetwork();
+                String offset = (mOldAlbum == null) ? "" : mOldAlbum.getNextOffset();
+                album = mNetworkSource.fetchAlbum(mAlbumType, offset);
+
                 if (album != null) {
                     newPhotos = album.getPhotos();
                 }
@@ -164,56 +159,13 @@ public class AlbumRepository {
             }
         }
 
-        @Nullable
-        private Album fetchAlbumFromDb() {
-            AlbumDao albumDao = mLocalSource.get().getAlbumDao();
-            Album album = albumDao.load((long) mAlbumType);
-            if (album != null) {
-                album.getPhotos();  // Otherwise photos are loaded lazily (== in UI thread)
-            }
-            return album;
-        }
-
-        @Nullable
-        private Album fetchAlbumFromNetwork() {
-            String albumPath = ALBUM_PATHS[mAlbumType];
-            String offset = (mOldAlbum == null) ? "" : mOldAlbum.getNextOffset();
-
-            Album album = null;
-            try {
-                Response<Album> response = mNetworkSource.downloadAlbum(albumPath, offset).execute();
-
-                if (response.isSuccessful()) {
-                    album = response.body();
-
-                } else {
-                    Log.e(TAG, "Failed to fetch album: " + response.code() + " "
-                            + response.message());
-                }
-            } catch (IOException | NullPointerException e) {
-                Log.e(TAG, "Failed to fetch album: " + e);
-            }
-            return album;
-        }
-
         private void saveUpdatesToDb(Album album, List<Photo> newPhotos) {
-            // Set key values for DB (not used by UI components, so synchronization is not needed)
-            album.setType((long) mAlbumType);
-            for (Photo photo : newPhotos) {
-                photo.setAlbumType((long) mAlbumType);
-            }
-
-            AlbumDao albumDao = mLocalSource.get().getAlbumDao();
-            PhotoDao photoDao = mLocalSource.get().getPhotoDao();
-
             if (mOldAlbum == null && mForceNetwork) { // Forced reload, clean up DB before inserting
-                List<Photo> oldPhotos = photoDao.queryBuilder()
-                        .where(PhotoDao.Properties.AlbumType.eq(mAlbumType)).list();
-                photoDao.deleteInTx(oldPhotos);
+                mLocalSource.clearPhotos(mAlbumType);
             }
 
-            albumDao.insertOrReplace(album);
-            photoDao.insertOrReplaceInTx(newPhotos);
+            mLocalSource.saveAlbum(album, mAlbumType);
+            mLocalSource.savePhotos(newPhotos, mAlbumType);
         }
     }
 }
